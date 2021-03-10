@@ -1,0 +1,52 @@
+- implement chat
+
+- REST usecase: GetToken -> generates token, associates it to the user
+- REST usecase: chat/{room} -> last 10 chat messages (place is 'lobby' or random uuid - meaning game room)
+- REST usecase: chat/{room}/send ->  add chat message, broadcasts it to all users registered in room
+
+Incoming messages
+- WS ws/lobby/{token} -> CreateGame
+- WS ws/lobby/{token} <- GameCreated (to every user in the lobby, unless private)
+- WS ws/lobby/{token} -> SendMessage
+- WS ws/lobby/{token} -> MessageReceived (to every user in the lobby)
+
+- WS ws/game/{gameId}/{token} <- (on connect) UserEntered
+- WS ws/game/{gameId}/{token} <- (on connect, if password protected) AuthenticationRequested
+
+- WS ws/game/{gameId}/{token} -> JoinGame
+- WS ws/game/{gameId}/{token} <- UserJoined
+
+- WS ws/game/{gameId}/{token} -> Spectate
+- WS ws/game/{gameId}/{token} <- Spectatered
+
+- WS ws/game/{gameId}/{token} -> StartGame (if sufficient users joined)
+- WS ws/game/{gameId}/{token} <- GameStarted + data for initial game state
+
+- WS ws/game/{gameId}/{token} -> SendMessage
+- WS ws/game/{gameId}/{token} -> MessageReceived
+
+Domain model:
+
+User:
+- tokens: UUID[]
+- games: GameId[]
+
+Game:
+- id
+- users
+- state {
+  - PHASE: pending (waiting for sufficient # players)|busy
+  - requiredPlayers: 6
+  - fascists: userId[]
+  - liberals: userId[]
+  - score[userId] => {won: 2, lost: 3}
+  - laws: Card[]
+  - currentRound {
+    - roundNumber: 1
+    - phase: chooseLeaders | voteLeaders | chooseLaws | ...
+    - president: userId
+    - possibleLaws
+    ...
+  }
+  - rounds[]
+}
