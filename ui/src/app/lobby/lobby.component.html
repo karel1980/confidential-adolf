@@ -4,5 +4,7 @@
 </textarea>
 
 <input [(ngModel)]="msg">
+<input [(ngModel)]="userId">
 
-<button (click)="onSendClicked()">SEND THAT SHIT</button>
+<button class="btn btn-primary" (click)="connect()">CONNECT ME UWU</button>
+<button class="btn btn-primary" (click)="onSendClicked()" [disabled]="!lobbyConnection">SEND THAT SHIT</button>

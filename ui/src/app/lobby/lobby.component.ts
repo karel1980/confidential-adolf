@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import {LobbyService} from "../lobby.service";
+import {Component, OnInit} from '@angular/core';
+import {LobbyConnection, LobbyService} from "../lobby.service";
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-lobby',
@@ -10,14 +11,25 @@ export class LobbyComponent implements OnInit {
 
   messages = "foo\nbar\ngamma";
 
-  msg:string;
+  msg: string;
+  userId: string = 'Dirk';
+  lobbyConnection: LobbyConnection;
+  subscription: Subscription;
 
-  constructor(private lobbyService: LobbyService) { }
+  constructor(private lobbyService: LobbyService) {
+  }
 
   ngOnInit(): void {
-    this.lobbyService.connect('ws://localhost:8080/lobby/test1');
+  }
 
-    this.lobbyService.observable.subscribe(
+  connect() {
+    this.lobbyConnection = this.lobbyService.connect(`ws://localhost:8080/lobby/${this.userId}`);
+
+    if (!!this.subscription) {
+      this.subscription.unsubscribe();
+    }
+
+    this.subscription = this.lobbyConnection.observable.subscribe(
       (msg) => {
         console.log("Message received: ", msg);
       }
@@ -25,9 +37,7 @@ export class LobbyComponent implements OnInit {
   }
 
   onSendClicked() {
-    console.log('I am a svc', this.lobbyService);
-    console.log('I am a method', this.lobbyService.send);
-    this.lobbyService.send(this.msg);
+    this.lobbyConnection.send(this.msg);
   }
 
 }

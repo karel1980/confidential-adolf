@@ -6,15 +6,13 @@ import {Observable, Observer, Subject} from "rxjs";
 })
 export class LobbyService {
 
-  public observable: Observable<MessageEvent>;
-  private observer: Subject<string>;
+  constructor() {
+  }
 
-  constructor() { }
-
-  connect(url: string) {
+  connect(url: string): LobbyConnection {
     const socket = new WebSocket(url);
 
-    this.observable = Observable.create(
+    const observable = Observable.create(
       (observer: Observer<MessageEvent>) => {
         socket.onmessage = observer.next.bind(observer);
         socket.onerror = observer.error.bind(observer);
@@ -23,13 +21,25 @@ export class LobbyService {
       }
     );
 
-    this.observer = Subject.create({
+    const observer = Subject.create({
       next: (data: string) => {
         if (socket.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify(data));
         }
       }
     });
+
+    return new LobbyConnection(observable, observer)
+  }
+}
+
+export class LobbyConnection {
+  observable: Observable<MessageEvent>;
+  observer: Subject<string>;
+
+  constructor(observable: Observable<MessageEvent>, observer: Subject<string>) {
+    this.observable = observable;
+    this.observer = observer;
   }
 
   public send(data: string) {
