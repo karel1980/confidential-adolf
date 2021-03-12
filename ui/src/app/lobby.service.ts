@@ -35,14 +35,14 @@ export class LobbyService {
 
 export class LobbyConnection {
   observable: Observable<MessageEvent>;
-  observer: Subject<string>;
+  observer: Subject<any>;
 
   constructor(observable: Observable<MessageEvent>, observer: Subject<string>) {
     this.observable = observable;
     this.observer = observer;
   }
 
-  public send(data: string) {
+  public send(data: any) {
     this.observer.next(data);
   }
 }

@@ -1,3 +1,4 @@
+- implement identification (associate user with token via rest associate user with session after identify message)
 - implement chat
 
 - REST usecase: GetToken -> generates token, associates it to the user

@@ -1,10 +1,17 @@
 <div>You're in the lobby</div>
 
-<textarea readonly [(ngModel)]="messages">
-</textarea>
+<div>
+  User: <input [(ngModel)]="userId">
+  <button class="btn btn-primary" (click)="connect()">Connect</button>
+</div>
 
-<input [(ngModel)]="msg">
-<input [(ngModel)]="userId">
+<div style="height: 400px; overflow: scroll">
+  <div *ngFor="let m of messages">
+    {{m|json}}
+  </div>
+</div>
+<div>
+  Message: <input [(ngModel)]="msg">
+  <button class="btn btn-primary" (click)="onSendClicked()" [disabled]="!lobbyConnection">Send</button>
+</div>
 
-<button class="btn btn-primary" (click)="connect()">CONNECT ME UWU</button>
-<button class="btn btn-primary" (click)="onSendClicked()" [disabled]="!lobbyConnection">SEND THAT SHIT</button>

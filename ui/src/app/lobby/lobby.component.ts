@@ -9,7 +9,7 @@ import {Subscription} from 'rxjs';
 })
 export class LobbyComponent implements OnInit {
 
-  messages = "foo\nbar\ngamma";
+  messages = [];
 
   msg: string;
   userId: string = 'Dirk';
@@ -23,7 +23,7 @@ export class LobbyComponent implements OnInit {
   }
 
   connect() {
-    this.lobbyConnection = this.lobbyService.connect(`ws://localhost:8080/lobby/${this.userId}`);
+    this.lobbyConnection = this.lobbyService.connect(`ws://localhost:8080/ws/lobby`);
 
     if (!!this.subscription) {
       this.subscription.unsubscribe();
@@ -31,13 +31,20 @@ export class LobbyComponent implements OnInit {
 
     this.subscription = this.lobbyConnection.observable.subscribe(
       (msg) => {
-        console.log("Message received: ", msg);
+        this.handleMessage(JSON.parse(msg.data))
       }
     )
   }
 
+  handleMessage(msg: any) {
+    this.messages.push(msg)
+  }
+
   onSendClicked() {
-    this.lobbyConnection.send(this.msg);
+    this.lobbyConnection.send({
+      "_type": "Talk",
+      message: this.msg
+    });
   }
 
 }
