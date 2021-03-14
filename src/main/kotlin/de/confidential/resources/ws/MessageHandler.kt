@@ -2,7 +2,7 @@ package de.confidential.resources.ws
 
 import javax.websocket.Session
 
-interface LobbyMessageHandler<M : LobbyMessage> {
+interface MessageHandler<M : IncomingMessage> {
 
     fun canHandle(): String
 

@@ -6,24 +6,16 @@ import javax.websocket.Session
 class TalkHandler(
     val sessions: Map<String, Session>,
     val jsonUtil: JsonUtil
-) : LobbyMessageHandler<TalkMessage> {
+) : MessageHandler<TalkRequest> {
 
-    override fun canHandle() = TalkMessage::class.toString()
+    override fun canHandle() = TalkRequest::class.toString()
 
-    override fun handle(session: Session, msg: TalkMessage) {
-//        println("AAAA")
-//        val user = SessionUtil.getUser(session)
-//        println("AAAA 2")
-
-        println("aaa")
+    override fun handle(session: Session, msg: TalkRequest) {
         broadcast(UserTalkedMessage("bob", msg.message))
-        println("bbb")
     }
 
-    private fun broadcast(msg: Any) {
-        println("jjj")
-        val stringToSend = jsonUtil.toString(msg)
-        println("kkk")
+    private fun broadcast(msg: OutgoingMessage) {
+        val stringToSend = jsonUtil.asString(msg)
 
         println("broadcasting >> $stringToSend")
         sessions.values.forEach(Consumer { s: Session ->

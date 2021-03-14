@@ -1,17 +1,19 @@
 <div>You're in the lobby</div>
 
-<div>
-  User: <input [(ngModel)]="userId">
-  <button class="btn btn-primary" (click)="connect()">Connect</button>
+<div *ngIf="!user">
+  What's your name? <input [(ngModel)]="userName">
+  <button class="btn btn-primary" [disabled]="!userName" (click)="connect()">Connect</button>
 </div>
 
-<div style="height: 400px; overflow: scroll">
-  <div *ngFor="let m of messages">
-    {{m|json}}
+<div *ngIf="user">
+  <div style="height: 400px; overflow: scroll">
+    <div *ngFor="let m of messages">
+      {{m|json}}
+    </div>
   </div>
-</div>
-<div>
-  Message: <input [(ngModel)]="msg">
-  <button class="btn btn-primary" (click)="onSendClicked()" [disabled]="!lobbyConnection">Send</button>
+  <div>
+    Message: <input [(ngModel)]="msg">
+    <button class="btn btn-primary" (click)="onSendClicked()" [disabled]="!lobbyConnection">Send</button>
+  </div>
 </div>
 

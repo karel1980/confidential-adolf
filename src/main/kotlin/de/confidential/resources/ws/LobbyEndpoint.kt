@@ -1,6 +1,8 @@
 package de.confidential.resources
 
+import de.confidential.domain.UserRepository
 import de.confidential.resources.ws.*
+import de.confidential.resources.ws.MessageHandler
 import io.quarkus.runtime.StartupEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.enterprise.context.ApplicationScoped
@@ -13,19 +15,23 @@ import javax.websocket.server.ServerEndpoint
 
 @ApplicationScoped
 @ServerEndpoint("/ws/lobby")
-class LobbyWsResource {
+class LobbyEndpoint {
 
     @Inject
     @field: Default
     lateinit var jsonUtil: JsonUtil
 
+    @Inject
+    @field: Default
+    lateinit var userRepository: UserRepository
+
     val sessions: MutableMap<String, Session> = ConcurrentHashMap<String, Session>()
 
-    lateinit var handlerMap: Map<String, LobbyMessageHandler<*>>
+    lateinit var handlerMap: Map<String, MessageHandler<*>>
 
     fun onStart(@Observes ev: StartupEvent?) {
         val handlers = listOf(
-            IdentifyHandler(sessions),
+            IdentifyHandler(sessions, jsonUtil, userRepository),
             TalkHandler(sessions, jsonUtil)
         )
         handlerMap = handlers.map { h -> h.canHandle() to h }.toMap()
@@ -45,7 +51,6 @@ class LobbyWsResource {
     fun onError(session: Session, throwable: Throwable) {
         if (throwable is Feedback) {
             session.asyncRemote.sendObject(jsonUtil.mapper.writeValueAsString(
-                //TODO: add mixin
                 ErrorResponse(throwable::class.toString(), throwable.params)
             ))
         } else {
@@ -54,21 +59,25 @@ class LobbyWsResource {
         }
     }
 
-    data class ErrorResponse(var type: String, val data: Any?) {
-        val error = true
-    }
-
     @OnMessage
     fun handleMessage(session: Session, msgString: String) {
-        val msg: LobbyMessage = jsonUtil.toLobbyMessage(msgString)
+        println("got message " + msgString)
+        val msg: IncomingMessage = jsonUtil.toIncoming(msgString)
         val type = msg::class.toString()
 
         val handler = handlerMap.getOrElse(type) {
             throw RuntimeException("no handler for $type")
         }
 
+        if (!SessionUtil.isIdentified(session) && requiresIdentification(handler)) {
+            session.asyncRemote.sendObject(jsonUtil.asString(IdentifyRequest()))
+            return
+        }
+
         handler::class.members.find { it.name == "handle" }!!.call(handler, session, msg)
     }
+
+    fun requiresIdentification(handler: MessageHandler<*>) = handler.canHandle() == IdentifyRequest::class.toString()
 
 }
 

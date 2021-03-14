@@ -1,0 +1,4 @@
+
+interface Game {
+  players: any[]
+}

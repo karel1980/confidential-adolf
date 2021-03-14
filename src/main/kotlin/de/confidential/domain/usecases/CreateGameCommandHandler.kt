@@ -5,12 +5,12 @@ import de.confidential.domain.GameCreatedEvent
 import de.confidential.domain.GameRepository
 import de.confidential.domain.UserRepository
 import de.confidential.resources.ws.CreateGameMessage
-import de.confidential.resources.ws.LobbyMessageHandler
+import de.confidential.resources.ws.MessageHandler
 import javax.enterprise.inject.Default
 import javax.inject.Inject
 import javax.websocket.Session
 
-class CreateGameCommandHandler: LobbyMessageHandler<CreateGameMessage> {
+class CreateGameCommandHandler: MessageHandler<CreateGameMessage> {
 
     @Inject
     @field: Default

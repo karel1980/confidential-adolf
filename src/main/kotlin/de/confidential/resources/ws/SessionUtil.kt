@@ -11,6 +11,10 @@ class SessionUtil {
             } as String
         }
 
+        fun isIdentified(session: Session): Boolean {
+            return session.userProperties.containsKey("USER_ID")
+        }
+
         fun identify(session: Session, user: String) {
             session.userProperties["USER_ID"] = user
         }

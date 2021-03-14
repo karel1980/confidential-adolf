@@ -12,10 +12,11 @@ class JsonUtil {
         .registerModule(KotlinModule())
         .registerModule(
             SimpleModule("lobby")
-                .setMixInAnnotation(LobbyMessage::class.java, LobbyMessageMixin::class.java)
+                .setMixInAnnotation(IncomingMessage::class.java, IncomingMessageMixin::class.java)
+                .setMixInAnnotation(OutgoingMessage::class.java, OutgoingMessageMixin::class.java)
         )
 
-    fun toString(value: Any): String = mapper.writeValueAsString(value)
-    fun toLobbyMessage(value: String): LobbyMessage = mapper.readValue(value, LobbyMessage::class.java)
+    fun asString(value: OutgoingMessage): String = mapper.writeValueAsString(value)
+    fun toIncoming(value: String): IncomingMessage = mapper.readValue(value, IncomingMessage::class.java)
 
 }

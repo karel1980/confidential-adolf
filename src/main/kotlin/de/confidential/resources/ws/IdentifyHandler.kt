@@ -1,20 +1,30 @@
 package de.confidential.resources.ws
 
+import de.confidential.domain.User
 import de.confidential.domain.UserRepository
-import javax.enterprise.inject.Default
-import javax.inject.Inject
+import java.util.*
+import java.util.UUID.randomUUID
 import javax.websocket.Session
 
-class IdentifyHandler(val sessions: MutableMap<String, Session>) : LobbyMessageHandler<IdentifyMessage> {
-
-    @Inject
-    @field: Default
-    lateinit var repo: UserRepository
+class IdentifyHandler(
+    val sessions: MutableMap<String, Session>,
+    val jsonUtil: JsonUtil,
+    val userRepository: UserRepository
+) : MessageHandler<IdentifyMessage> {
 
     override fun canHandle() = IdentifyMessage::class.toString()
 
     override fun handle(session: Session, msg: IdentifyMessage) {
-        SessionUtil.identify(session, repo.findUserByToken(msg.token))
+        createOrUpdateUser(session, msg.id ?: randomUUID(), msg.name)
+    }
+
+    private fun createOrUpdateUser(session: Session, id: UUID, name: String): User {
+        val user = User(id, name)
+        userRepository.registerUser(user)
+        val reply = IdentificationSuccess(user.id, user.name)
+        println("Sending " + reply)
+        session.asyncRemote.sendObject(jsonUtil.asString(reply))
+        return user;
     }
 }
 

@@ -6,6 +6,9 @@ import {AppComponent} from './app.component';
 import {LobbyComponent} from './lobby/lobby.component';
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
+import {lobbyReducer} from './lobby/lobby.reducer';
+import {StoreModule} from "@ngrx/store";
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -15,7 +18,8 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
     BrowserModule,
     AppRoutingModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    StoreModule.forRoot({ lobby: lobbyReducer })
   ],
   providers: [],
   bootstrap: [AppComponent]

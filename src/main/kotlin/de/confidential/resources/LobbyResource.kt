@@ -2,6 +2,8 @@ package de.confidential.resources
 
 import de.confidential.domain.ChatRepository
 import de.confidential.domain.Message
+import io.quarkus.undertow.runtime.HttpSessionContext
+import io.vertx.core.http.HttpServerRequest
 import java.time.LocalDateTime
 import javax.enterprise.inject.Default
 import javax.inject.Inject
@@ -19,8 +21,9 @@ class LobbyResource {
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    fun hello(@Context sec: SecurityContext): String {
-        return "Welcome to the lobby, ${sec.userPrincipal}"
+    fun hello(@Context session: HttpSessionContext): String {
+        println("${session.state}")
+        return "Welcome to the lobby"
     }
 
     @Path("/chat")
