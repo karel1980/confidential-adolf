@@ -21,8 +21,9 @@ class IdentifyHandler(
     private fun createOrUpdateUser(session: Session, id: UUID, name: String): User {
         val user = User(id, name)
         userRepository.registerUser(user)
+        SessionUtil.identify(session, user.id)
+
         val reply = IdentificationSuccess(user.id, user.name)
-        println("Sending " + reply)
         session.asyncRemote.sendObject(jsonUtil.asString(reply))
         return user;
     }

@@ -1,5 +1,6 @@
 package de.confidential.resources
 
+import de.confidential.domain.RoomRepository
 import de.confidential.domain.UserRepository
 import de.confidential.resources.ws.*
 import de.confidential.resources.ws.MessageHandler
@@ -20,10 +21,12 @@ class LobbyEndpoint {
     @Inject
     @field: Default
     lateinit var jsonUtil: JsonUtil
-
     @Inject
     @field: Default
     lateinit var userRepository: UserRepository
+    @Inject
+    @field: Default
+    lateinit var roomRepository: RoomRepository
 
     val sessions: MutableMap<String, Session> = ConcurrentHashMap<String, Session>()
 
@@ -32,6 +35,7 @@ class LobbyEndpoint {
     fun onStart(@Observes ev: StartupEvent?) {
         val handlers = listOf(
             IdentifyHandler(sessions, jsonUtil, userRepository),
+            CreateRoomHandler(sessions, jsonUtil, userRepository, roomRepository),
             TalkHandler(sessions, jsonUtil)
         )
         handlerMap = handlers.map { h -> h.canHandle() to h }.toMap()
@@ -50,9 +54,11 @@ class LobbyEndpoint {
     @OnError
     fun onError(session: Session, throwable: Throwable) {
         if (throwable is Feedback) {
-            session.asyncRemote.sendObject(jsonUtil.mapper.writeValueAsString(
-                ErrorResponse(throwable::class.toString(), throwable.params)
-            ))
+            session.asyncRemote.sendObject(
+                jsonUtil.mapper.writeValueAsString(
+                    ErrorResponse(throwable::class.toString(), throwable.params)
+                )
+            )
         } else {
             println("onError >> $throwable")
             throwable.printStackTrace()
@@ -61,7 +67,7 @@ class LobbyEndpoint {
 
     @OnMessage
     fun handleMessage(session: Session, msgString: String) {
-        println("got message " + msgString)
+//        println("got message $msgString")
         val msg: IncomingMessage = jsonUtil.toIncoming(msgString)
         val type = msg::class.toString()
 

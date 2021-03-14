@@ -28,6 +28,7 @@ export class LobbyService {
     const observer = Subject.create({
       next: (data: string) => {
         if (socket.readyState === WebSocket.OPEN) {
+          console.log('sending >>', data)
           socket.send(JSON.stringify(data));
         }
       }

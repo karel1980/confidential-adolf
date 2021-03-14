@@ -8,18 +8,22 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 import {lobbyReducer} from './lobby/lobby.reducer';
 import {StoreModule} from "@ngrx/store";
+import {RoomComponent} from './room/room.component';
+import {EffectsModule} from '@ngrx/effects';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LobbyComponent
+    LobbyComponent,
+    RoomComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
     ReactiveFormsModule,
-    StoreModule.forRoot({ lobby: lobbyReducer })
+    StoreModule.forRoot({ lobby: lobbyReducer }),
+    EffectsModule.forRoot()
   ],
   providers: [],
   bootstrap: [AppComponent]

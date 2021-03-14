@@ -1,5 +1,6 @@
 package de.confidential.domain
 
+import java.lang.RuntimeException
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
@@ -12,8 +13,12 @@ class UserRepository {
         users[user.id] = user
     }
 
-    fun findUserById(id: UUID): User? {
+    fun findUser(id: UUID): User? {
         return users[id]
+    }
+
+    fun getUser(userId: UUID): User {
+        return findUser(userId) ?: throw RuntimeException("user not found")
     }
 
 }

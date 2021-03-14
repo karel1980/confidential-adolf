@@ -11,7 +11,7 @@ class TalkHandler(
     override fun canHandle() = TalkRequest::class.toString()
 
     override fun handle(session: Session, msg: TalkRequest) {
-        broadcast(UserTalkedMessage("bob", msg.message))
+        broadcast(UserTalked("bob", msg.message))
     }
 
     private fun broadcast(msg: OutgoingMessage) {

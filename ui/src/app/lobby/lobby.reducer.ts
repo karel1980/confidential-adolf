@@ -1,5 +1,5 @@
 import {createReducer, on} from '@ngrx/store';
-import {setIdentification} from './lobby.actions';
+import {goToRoom, setIdentification} from './lobby.actions';
 
 export interface User {
   id: string,
@@ -7,20 +7,19 @@ export interface User {
 }
 
 export interface LobbyState {
-  messages: any[]
-  user: User
+  messages: any[],
+  user: User,
+  roomId: string
 }
 
 const initialState: LobbyState = {
   messages: [],
-  user: null
+  user: null,
+  roomId: null
 };
 
 export const lobbyReducer = createReducer(
   initialState,
-  on(setIdentification, (state, user) => {
-    let newState = {...state, user};
-    console.log('applying user to state', state, newState)
-    return newState;
-  }),
+  on(setIdentification, (state, user) => ({...state, user})),
+  on(goToRoom, (state, {roomId}) => ({...state, roomId: roomId}))
 );

@@ -1,31 +1,34 @@
-import {Component, OnInit} from '@angular/core';
-import {LobbyConnection, LobbyService} from "../lobby.service";
-import {Subscription} from 'rxjs';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {LobbyConnection, LobbyService} from "./lobby.service";
+import {Subject, Subscription} from 'rxjs';
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
-import {setIdentification} from "./lobby.actions";
+import {goToRoom, setIdentification} from "./lobby.actions";
 import {LobbyState, User} from "./lobby.reducer";
+import {Router} from "@angular/router";
+import {takeUntil} from "rxjs/operators";
 
-type Message = { type: string; [key: string]: any; }
-type Handler = { type: string; handle: (Message, store: Store) => void };
+interface Message { type: string; [key: string]: any; }
+interface Handler { type: string; handle: (Message, Store) => void }
 
 interface IdentificationSuccess extends Message {
   id: string,
   name: string
 }
 
-const TalkHandler = {
-  type: "UserTalked",
-  handle: function (message: Message, store: Store) {
-    console.log("todo: handle message")
-  }
+interface RoomCreated extends Message {
+  id: string
 }
 
 const IdentificationSuccessHandler = {
   type: "IdentificationSuccess",
-  handle: (message: IdentificationSuccess, store: Store) => {
-    console.log("dispatching setIdentification");
-    store.dispatch(setIdentification(message))
-  }
+  handle: (message: IdentificationSuccess, store: Store) =>
+    store.dispatch(setIdentification({id: message.id, name: message.name}))
+}
+
+const RoomCreatedHandler = {
+  type: "RoomCreated",
+  handle: ({id}:RoomCreated, store: Store) =>
+    store.dispatch(goToRoom({roomId: id}))
 }
 
 @Component({
@@ -33,32 +36,57 @@ const IdentificationSuccessHandler = {
   templateUrl: './lobby.component.html',
   styleUrls: ['./lobby.component.scss']
 })
-export class LobbyComponent implements OnInit {
+export class LobbyComponent implements OnInit, OnDestroy {
 
-  messages = [];
-
-  msg: string;
   user: User = null;
   userName: string;
   handlers: Map<string, Handler>;
 
+  onDestroy$ = new Subject();
+
   lobbyConnection: LobbyConnection;
   subscription: Subscription;
 
-  constructor(private lobbyService: LobbyService, private store: Store) {
+  // used to avoid looping when there is an infinite loop of 'createroom -> identify -> createroom -> ...'
+  roomCreationAttempted = false;
+
+  constructor(private lobbyService: LobbyService, private store: Store, private router: Router) {
     this.handlers = new Map([
-      TalkHandler,
-      IdentificationSuccessHandler
+      IdentificationSuccessHandler,
+      RoomCreatedHandler
     ].map(h => [h.type, h]));
   }
 
   ngOnInit(): void {
     const lobbySelector = createFeatureSelector('lobby');
     const userSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.user);
+    const roomSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.roomId);
 
-    this.store.select(userSelector, u => u).subscribe((u: User) => {
-      this.user = u;
+    this.store.select(userSelector)
+      .pipe(takeUntil(this.onDestroy$))
+      .subscribe((user) => {
+      this.user = user;
+      if (user) {
+        //TODO: set user in local storage? (check ngrx where this should be done -> in reducer? with effects?)
+        if (!this.roomCreationAttempted) {
+          this.roomCreationAttempted = true;
+          this.send({"_type": "CreateRoom"});
+        }
+      }
     })
+
+    // TODO: look into ngrx router features. For now this will do:
+    this.store.select(roomSelector)
+      .pipe(takeUntil(this.onDestroy$))
+      .subscribe(roomId => {
+      if (roomId) {
+        this.router.navigate([`/room/${roomId}`]);
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.onDestroy$.next();
   }
 
   connect() {
@@ -80,7 +108,6 @@ export class LobbyComponent implements OnInit {
 
   handleMessage(msg: Message) {
     console.log("receiving >>", msg)
-    this.messages.push(msg);
     if (!msg._type) {
       console.error("received message without type", msg);
       return;
@@ -95,15 +122,7 @@ export class LobbyComponent implements OnInit {
     handler.handle(msg, this.store)
   }
 
-  onSendClicked() {
-    this.send({
-      "_type": "Talk",
-      message: this.msg
-    });
-  }
-
   send(msg: any) {
-    console.log('sending >>', msg)
     this.lobbyConnection.send(msg);
   }
 
