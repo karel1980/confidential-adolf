@@ -1,14 +1,15 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {LobbyConnection, LobbyService} from "./lobby.service";
-import {Subject, Subscription} from 'rxjs';
+import {WebsocketService} from "./websocket.service";
+import {Subject} from 'rxjs';
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {goToRoom, setIdentification} from "./lobby.actions";
 import {LobbyState, User} from "./lobby.reducer";
 import {Router} from "@angular/router";
 import {takeUntil} from "rxjs/operators";
+import {Engine} from "./engine";
 
-interface Message { type: string; [key: string]: any; }
-interface Handler { type: string; handle: (Message, Store) => void }
+export interface Message { type: string; [key: string]: any; }
+export interface Handler { type: string; handle: (Message, Store) => void }
 
 interface IdentificationSuccess extends Message {
   id: string,
@@ -40,21 +41,19 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   user: User = null;
   userName: string;
-  handlers: Map<string, Handler>;
+
+  engine: Engine;
 
   onDestroy$ = new Subject();
-
-  lobbyConnection: LobbyConnection;
-  subscription: Subscription;
 
   // used to avoid looping when there is an infinite loop of 'createroom -> identify -> createroom -> ...'
   roomCreationAttempted = false;
 
-  constructor(private lobbyService: LobbyService, private store: Store, private router: Router) {
-    this.handlers = new Map([
+  constructor(private ws: WebsocketService, private store: Store, private router: Router) {
+    this.engine = new Engine([
       IdentificationSuccessHandler,
       RoomCreatedHandler
-    ].map(h => [h.type, h]));
+    ], store, ws);
   }
 
   ngOnInit(): void {
@@ -87,43 +86,17 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.onDestroy$.next();
+    this.engine.stop();
   }
 
   connect() {
-    this.lobbyConnection = this.lobbyService.connect(`ws://localhost:8080/ws/lobby`);
-
-    if (!!this.subscription) {
-      this.subscription.unsubscribe();
-    }
-
-    this.subscription = this.lobbyConnection.observable.subscribe(
-      (msg) => {
-        this.handleMessage(JSON.parse(msg.data))
-      }
-    )
-
-    this.lobbyConnection.ready.subscribe(() =>
-      this.send({_type: "Identify", name: this.userName}))
-  }
-
-  handleMessage(msg: Message) {
-    console.log("receiving >>", msg)
-    if (!msg._type) {
-      console.error("received message without type", msg);
-      return;
-    }
-
-    const handler = this.handlers.get(msg._type);
-    if (!handler) {
-      console.error("no handler for message type", msg);
-      return;
-    }
-
-    handler.handle(msg, this.store)
+    this.engine.connect(`ws://localhost:8080/ws/lobby`, () => {
+      this.send({_type: "Identify", name: this.userName})
+    });
   }
 
   send(msg: any) {
-    this.lobbyConnection.send(msg);
+    this.engine.send(msg);
   }
 
 }

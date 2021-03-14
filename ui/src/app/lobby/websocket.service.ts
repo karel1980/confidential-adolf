@@ -5,12 +5,12 @@ import {take} from "rxjs/operators";
 @Injectable({
   providedIn: 'root'
 })
-export class LobbyService {
+export class WebsocketService {
 
   constructor() {
   }
 
-  connect(url: string): LobbyConnection {
+  connect(url: string): WsConnection {
     const socket = new WebSocket(url);
 
     const ready = new Subject<void>();
@@ -34,11 +34,11 @@ export class LobbyService {
       }
     });
 
-    return new LobbyConnection(observable, observer, ready.pipe(take(1)));
+    return new WsConnection(observable, observer, ready.pipe(take(1)));
   }
 }
 
-export class LobbyConnection {
+export class WsConnection {
   observable: Observable<MessageEvent>;
   observer: Subject<any>;
   ready: Observable<void>;
