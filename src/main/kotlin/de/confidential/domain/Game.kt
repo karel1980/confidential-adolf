@@ -43,6 +43,9 @@ class Game(private val players: List<User>) {
     fun presidentialCandidate() = currentRound.presidentialCandidate
     fun chancellor() = currentRound.chancellor
     fun nominateChancellor(nominee: User) {
+        if (nominee == presidentialCandidate()) {
+            throw IllegalArgumentException("cannnot nominate presidential candidate as chancellor")
+        }
         currentRound.chancellor = nominee
     }
 }

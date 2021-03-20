@@ -1,7 +1,10 @@
 package de.confidential.domain
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.lang.IllegalArgumentException
 import java.util.UUID.randomUUID
 
 internal class GameTest {
@@ -50,13 +53,23 @@ internal class GameTest {
     }
 
     @Test
-    fun firstRound_nominateChancellorWorks() {
+    fun nominateChancellorWorks() {
         val game = Game(createUsers(5))
         assertThat(game.chancellor()).isNull()
 
         game.nominateChancellor(game.seats[1])
 
         assertThat(game.chancellor()).isEqualTo(game.seats[1])
+    }
+
+    @Test
+    fun nominateChancellor_throwsExceptionIfNomineeIsPresidentialCandidate() {
+        val game = Game(createUsers(5))
+        assertThat(game.chancellor()).isNull()
+
+        Assertions.assertThrows(IllegalArgumentException::class.java) { ->
+            game.nominateChancellor(game.seats[0])
+        }
     }
 
     private fun assertAssignments(playerCount: Int, expectedLiberals: Int, expectedFascists: Int) {

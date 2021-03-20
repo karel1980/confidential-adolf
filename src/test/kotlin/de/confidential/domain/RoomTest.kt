@@ -32,7 +32,7 @@ internal class RoomTest {
     @Test
     fun startGame_throwsExceptionIfInsufficientPlayers() {
         val room = Room(randomUUID())
-        assertThrows(IllegalArgumentException::class.java, { -> room.startGame() })
+        assertThrows(IllegalArgumentException::class.java) { -> room.startGame() }
     }
 
     @Test
