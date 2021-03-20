@@ -1,30 +1,20 @@
 package de.confidential.resources.ws
 
+import de.confidential.domain.Room
 import java.util.function.Consumer
 import javax.websocket.Session
 
 class TalkHandler(
-    val sessions: Map<String, Session>,
-    val jsonUtil: JsonUtil
-) : MessageHandler<TalkRequest> {
+    private val comms: Comms
+) : RoomMessageHandler<TalkRequest> {
 
     override fun canHandle() = TalkRequest::class.toString()
 
-    override fun handle(session: Session, msg: TalkRequest) {
+    override fun handle(session: Session, room: Room, msg: TalkRequest) {
         broadcast(UserTalked("bob", msg.message))
     }
 
-    private fun broadcast(msg: OutgoingMessage) {
-        val stringToSend = jsonUtil.asString(msg)
-
-        println("broadcasting >> $stringToSend")
-        sessions.values.forEach(Consumer { s: Session ->
-            println("lll")
-            s.asyncRemote.sendObject(stringToSend) { result ->
-                if (result.exception != null) {
-                    println("Unable to send message: " + result.exception)
-                }
-            }
-        })
+    private fun broadcast(msg: UserTalked) {
+        comms.broadcast(msg)
     }
 }

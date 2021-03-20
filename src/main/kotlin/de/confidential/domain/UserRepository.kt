@@ -1,6 +1,5 @@
 package de.confidential.domain
 
-import java.lang.RuntimeException
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 
@@ -24,3 +23,4 @@ class UserRepository {
 }
 
 data class User(val id: UUID, val name: String)
+data class Membership(val id: UUID, val user: User, val room: Room)

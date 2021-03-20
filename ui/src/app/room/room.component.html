@@ -1,1 +1,19 @@
-<p>room works!</p>
+<h2>Room</h2>
+
+<div *ngIf="!connected">
+  <input placeholder="Your name" [(ngModel)]="userName">
+  <button class="btn btn-primary" (click)="onClickJoin()">Join</button>
+</div>
+<div *ngIf="connected">
+  <h3>Players</h3>
+  <ul>
+    <li *ngFor="let user of room?.users">{{user|json}}</li>
+  </ul>
+
+  <h3>Messages</h3>
+  <div *ngFor="let message of messages">
+    {{message}}
+  </div>
+
+  <button (click)="onPingClicked()">Ping</button>
+</div>

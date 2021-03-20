@@ -1,7 +1,17 @@
 import {Store} from "@ngrx/store";
-import {Handler, Message} from "./lobby.component";
 import {WebsocketService, WsConnection} from "./websocket.service";
 import {Subscription} from "rxjs";
+
+
+export interface Message {
+  type: string;
+  [key: string]: any; // this makes types worthless. should split type from payload and use Message<PayloadType> or something
+}
+
+export interface Handler {
+  type: string;
+  handle: (Message, Store, engine?: Engine) => void
+}
 
 export class Engine {
   wsConnection: WsConnection;
@@ -42,7 +52,7 @@ export class Engine {
       return;
     }
 
-    handler.handle(msg, this.store)
+    handler.handle(msg, this.store, this)
   }
 
   stop() {
