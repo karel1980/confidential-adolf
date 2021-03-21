@@ -1,8 +1,21 @@
-# confidential-adolf project
+# Confidential Adolf
+
+This is an implementation of the game Secret Hitler. (work in progress).
+
+The original can be found here: https://www.secrethitler.com/
+© 2016–2021 GOAT, WOLF, & CABBAGE - CC SA–BY–NC 4.0 - SECRETHITLERGAME@GMAIL.COM
+
+Confidential Adolf has the same license (CC SA-BY-NC 4.0).
+See https://creativecommons.org/licenses/by-nc-sa/4.0/ for more information.
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
-
 If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+
+If there are any errors/remarks/problems, please reach out via https://github.com/karel1980/onfidential-adolf/issues
+
+## Development:
+
+Events: https://jamboard.google.com/d/1AeRbkaGbW_zMchHrT9N2_yX30TBcYrNVKwesbPNhBZs/viewer?f=0
 
 ## Running the application in dev mode
 
