@@ -17,7 +17,20 @@ class Game(private val players: List<User>) {
 
     val hitler: User
 
-    var currentRound: Round
+    var currentRound: NormalRound
+    val rounds = mutableListOf<Round>()
+
+    val electionTracker = ElectionTracker()
+
+    var enactedLiberalPolicies = 0
+    var enactedFasistPolicies = 0
+
+    var winningParty: PolicyTile? = null
+
+    companion object {
+        val LIBERAL_POLICIES_NEEDED_TO_WIN = 5
+        val FASCIST_POLICIES_NEEDED_TO_WIN = 6
+    }
 
     init {
         seats = players.shuffled()
@@ -37,7 +50,8 @@ class Game(private val players: List<User>) {
         fascists = randomized.takeLast(randomized.size - liberalCount)
         hitler = fascists.random()
 
-        currentRound = Round(0, seats[0])
+        currentRound = NormalRound(0, seats, seats[0])
+        rounds.add(currentRound)
     }
 
     fun presidentialCandidate() = currentRound.presidentialCandidate
@@ -48,4 +62,89 @@ class Game(private val players: List<User>) {
         }
         currentRound.chancellor = nominee
     }
+
+    fun voteLeadership(user: User, vote: Vote) {
+        currentRound.voteLeadership(user, vote)
+
+        val voteResult = currentRound.leadershipVotingRound.voteResult
+        if (voteResult != null) {
+            if (voteResult.endResult == Vote.NO) {
+                electionTracker.increaseFailedElections()
+                if (electionTracker.failedElections == 3) {
+                    playChaosRound()
+                    if (winningParty != null) {
+                        addNormalRoundWithRoundNumber(currentRound.roundNumber + 2)
+                    }
+                } else {
+                    addNormalRound()
+                }
+            } else {
+                electionTracker.resetFailedElections()
+                // next round phase: present top 3 cards to president
+            }
+        }
+    }
+
+    private fun addNormalRound() {
+        addNormalRoundWithRoundNumber(currentRound.roundNumber + 1)
+    }
+
+    private fun addNormalRoundWithRoundNumber(roundNumber: Int) {
+        currentRound = NormalRound(
+            currentRound.roundNumber + 1, players,
+            seats[(seats.indexOf(currentRound.presidentialCandidate) + 1) % seats.size]
+        )
+        rounds.add(currentRound)
+    }
+
+    private fun playChaosRound() {
+        rounds.add(ChaosRound(currentRound.roundNumber + 1))
+        electionTracker.resetFailedElections()
+
+        val policyTile = drawTopPolicyTile()
+        placePolicyTile(policyTile)
+        checkGameIsDone()
+    }
+
+    private fun placePolicyTile(policyTile: PolicyTile) {
+        when (policyTile) {
+            FASCIST -> enactedFasistPolicies += 1
+            LIBERAL -> enactedLiberalPolicies += 1
+        }
+    }
+
+    private fun drawTopPolicyTile() = policyTiles.removeAt(0)
+
+    private fun checkGameIsDone(): Boolean {
+        if (enactedFasistPolicies == FASCIST_POLICIES_NEEDED_TO_WIN) {
+            winningParty = FASCIST
+            return true
+        }
+        if (enactedLiberalPolicies == LIBERAL_POLICIES_NEEDED_TO_WIN) {
+            winningParty = LIBERAL
+            return true
+        }
+        return false
+    }
+
+    fun leadershipVoteResult(): VoteResult? {
+        return currentRound.leadershipVotingRound.voteResult
+    }
+
+}
+
+data class VoteResult(val yesVotes: Int, val noVotes: Int) {
+
+    val endResult: Vote = if (yesVotes > noVotes) {
+        Vote.YES
+    } else {
+        Vote.NO
+    }
+
+    companion object {
+        fun create(votes: Collection<Vote>): VoteResult {
+            return VoteResult(votes.count { v -> v == Vote.YES }, votes.count { v -> v == Vote.NO })
+        }
+    }
+
 }
