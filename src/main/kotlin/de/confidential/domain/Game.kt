@@ -9,6 +9,7 @@ class Game(private val players: List<User>) {
         (List(6) { LIBERAL } + List(11) { FASCIST })
             .shuffled()
             .toMutableList()
+    var discardedPolicyTiles = mutableListOf<PolicyTile>()
 
     val seats: List<User>
 
@@ -56,9 +57,13 @@ class Game(private val players: List<User>) {
 
     fun presidentialCandidate() = currentRound.presidentialCandidate
     fun chancellor() = currentRound.chancellor
+
     fun nominateChancellor(nominee: User) {
         if (nominee == presidentialCandidate()) {
             throw IllegalArgumentException("cannnot nominate presidential candidate as chancellor")
+        }
+        if (currentRound.chancellor != null) {
+            throw IllegalArgumentException("Chancellor is already nominated for this round")
         }
         currentRound.chancellor = nominee
     }
@@ -80,9 +85,14 @@ class Game(private val players: List<User>) {
                 }
             } else {
                 electionTracker.resetFailedElections()
-                // next round phase: present top 3 cards to president
+                currentRound.presidentPolicyTiles = policyTiles.take(3)
+                policyTiles = policyTiles.subList(3, policyTiles.size)
             }
         }
+    }
+
+    fun leadershipVoteResult(): VoteResult? {
+        return currentRound.leadershipVotingRound.voteResult
     }
 
     private fun addNormalRound() {
@@ -90,8 +100,12 @@ class Game(private val players: List<User>) {
     }
 
     private fun addNormalRoundWithRoundNumber(roundNumber: Int) {
+        //TODO: make sure policyTiles contains at least three cards.
+        // (if < 3 remain, add discardedPolicyTiles back to policy tiles and shuffle)
+
         currentRound = NormalRound(
-            currentRound.roundNumber + 1, players,
+            roundNumber, players,
+            //TODO: make next presidential candidate selection should take killed players into account
             seats[(seats.indexOf(currentRound.presidentialCandidate) + 1) % seats.size]
         )
         rounds.add(currentRound)
@@ -127,8 +141,23 @@ class Game(private val players: List<User>) {
         return false
     }
 
-    fun leadershipVoteResult(): VoteResult? {
-        return currentRound.leadershipVotingRound.voteResult
+    fun presidentPolicyTiles(): List<PolicyTile>? {
+        return currentRound.presidentPolicyTiles
+    }
+
+    fun chancellorPolicyTiles(): List<PolicyTile>? {
+        return currentRound.chancellorPolicyTiles
+    }
+
+    fun discardPolicyTile(user: User, policyToDiscard: PolicyTile) {
+        if (user != currentRound.presidentialCandidate) {
+            throw IllegalArgumentException("Only the president can discard a policy")
+        }
+
+        val remaining = currentRound.presidentPolicyTiles!!.toMutableList()
+        remaining.remove(policyToDiscard)
+        currentRound.chancellorPolicyTiles = remaining
+        discardedPolicyTiles.add(policyToDiscard)
     }
 
 }

@@ -111,6 +111,35 @@ internal class GameTest {
     }
 
     @Test
+    fun nominateChancellor_works() {
+        val game = Game(createUsers(5))
+
+        game.nominateChancellor(game.seats[1])
+
+        assertThat(game.chancellor())
+            .isEqualTo(game.seats[1])
+    }
+
+    @Test
+    fun nominateChancellor_throwsException_whenChancellorAlreadyNominated() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.seats[1])
+
+        assertThrows(IllegalArgumentException::class.java) { -> game.nominateChancellor(game.seats[1]) }
+    }
+
+    @Test
+    fun voteLeadership_registersFirstVote() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.seats[1])
+
+        game.voteLeadership(game.seats[0], Vote.YES)
+
+        assertThat(game.currentRound.leadershipVotingRound.votes)
+            .isEqualTo(mapOf(Pair(game.seats[0],Vote.YES)))
+    }
+
+    @Test
     fun voteLeadership_votingTwice_throwsException() {
         val users = createUsers(5)
         val game = Game(users)
@@ -222,6 +251,58 @@ internal class GameTest {
         assertThat(game.policyTiles.size)
             .isEqualTo(countPolicyTiles - 1)
     }
+
+    @Test
+    fun voteLeadership_throwsExceptionWhenChancellorNotNominatedYet() {
+        val game = Game(createUsers(5))
+
+        assertThrows(IllegalStateException::class.java) { -> game.voteLeadership(game.seats[0], Vote.YES) }
+    }
+
+    @Test
+    fun voteLeadership_() {
+        val game = Game(createUsers(5))
+
+        assertThrows(IllegalStateException::class.java) { -> game.voteLeadership(game.seats[0], Vote.YES) }
+    }
+
+    @Test
+    fun voteLeadership_givenSuccessfulVote_thenThreePolicyTilesArePresentedToPresident() {
+        val game = Game(createUsers(5))
+        val countPolicyTiles = game.policyTiles.size
+        game.nominateChancellor(game.seats[1])
+        game.seats.forEach { u -> game.voteLeadership(u, Vote.YES) }
+
+        assertThat(game.presidentPolicyTiles())
+            .hasSize(3)
+        assertThat(game.policyTiles.size)
+            .isEqualTo(countPolicyTiles - 3)
+    }
+
+    @Test
+    fun discardPolicyTile_allowsPresidentToDiscardPolicyTile() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.seats[1])
+        game.seats.forEach { u -> game.voteLeadership(u, Vote.YES) }
+
+        val firstPolicy = game.presidentPolicyTiles()!![0]
+        game.discardPolicyTile(game.seats[0], firstPolicy)
+
+        assertThat(game.discardedPolicyTiles)
+            .containsExactly(firstPolicy)
+        assertThat(game.chancellorPolicyTiles())
+            .isEqualTo(listOf(game.presidentPolicyTiles()!![1],game.presidentPolicyTiles()!![2]))
+    }
+
+    @Test
+    fun discardPolicyTile_invalidUsages() {
+//        TODO("test discarding too early")
+//        TODO("test discarding by wrong person")
+//        TODO("test discarding tile that was not presented")
+//        TODO("test discarding twice")
+    }
+
+    //TODO: test discard by wrong user (first discard must be president, second must be chancellor)
 
     private fun assertAssignments(playerCount: Int, expectedLiberals: Int, expectedFascists: Int) {
         val game = Game(createUsers(playerCount))
