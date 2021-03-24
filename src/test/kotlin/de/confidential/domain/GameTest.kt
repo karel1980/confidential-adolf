@@ -1,5 +1,7 @@
 package de.confidential.domain
 
+import de.confidential.resources.ws.DiscardPolicyTile
+import de.confidential.resources.ws.NominateChancellor
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -10,8 +12,8 @@ internal class GameTest {
     fun initiallyHas6LiberalAnd11FascistTiles() {
         val game = Game(createUsers(5))
 
-        val fascistCount = game.policyTiles.count { tile -> tile == PolicyTile.FASCIST }
-        val liberalCount = game.policyTiles.count { tile -> tile == PolicyTile.LIBERAL }
+        val fascistCount = game.state.policyTiles.count { tile -> tile == PolicyTile.FASCIST }
+        val liberalCount = game.state.policyTiles.count { tile -> tile == PolicyTile.LIBERAL }
 
         assertThat(fascistCount).isEqualTo(11)
         assertThat(liberalCount).isEqualTo(6)
@@ -21,8 +23,8 @@ internal class GameTest {
     fun newGame_startsWith0EnactedPolicies() {
         val game = Game(createUsers(5))
 
-        assertThat(game.enactedFasistPolicies).isEqualTo(0)
-        assertThat(game.enactedLiberalPolicies).isEqualTo(0)
+        assertThat(game.state.enactedFasistPolicies).isEqualTo(0)
+        assertThat(game.state.enactedLiberalPolicies).isEqualTo(0)
     }
 
     @Test
@@ -39,7 +41,7 @@ internal class GameTest {
     fun assignsHitler() {
         val game = Game(createUsers(5))
 
-        assertThat(game.hitler in game.fascists)
+        assertThat(game.state.hitler in game.state.fascists)
     }
 
     @Test
@@ -47,25 +49,26 @@ internal class GameTest {
         val game = Game(createUsers(5))
 
         assertThat(game.presidentialCandidate())
-            .isEqualTo(game.seats[0])
+            .isEqualTo(game.state.players[0])
     }
 
     @Test
     fun firstRound_chancellorInitallyNull() {
         val game = Game(createUsers(5))
 
-        assertThat(game.chancellor())
+        assertThat(game.state.currentRound.chancellor)
             .isNull()
     }
 
     @Test
     fun nominateChancellorWorks() {
-        val game = Game(createUsers(5))
+        val players = createUsers(5)
+        val game = Game(players)
         assertThat(game.chancellor()).isNull()
 
-        game.nominateChancellor(game.seats[1])
+        game.on(game.presidentialCandidate().id, NominateChancellor(game.state.players[1].id))
 
-        assertThat(game.chancellor()).isEqualTo(game.seats[1])
+        assertThat(game.chancellor()).isEqualTo(game.state.players[1])
     }
 
     @Test
@@ -73,8 +76,8 @@ internal class GameTest {
         val game = Game(createUsers(5))
         assertThat(game.chancellor()).isNull()
 
-        assertThrows(IllegalArgumentException::class.java) { ->
-            game.nominateChancellor(game.seats[0])
+        assertThrows(IllegalArgumentException::class.java) {
+            game.nominateChancellor(game.state.players[0].id, game.players[0])
         }
     }
 
@@ -82,9 +85,9 @@ internal class GameTest {
     fun voteLeadership_majorityVotesYes_doesNotStartNextRound() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        users.forEach { u -> game.voteLeadership(u, Vote.YES) }
+        users.forEach { u -> game.voteLeadership(u.id, Vote.YES) }
 
         assertThat(game.leadershipVoteResult())
             .isEqualTo(VoteResult(5, 0))
@@ -94,13 +97,15 @@ internal class GameTest {
     fun voteLeadership_majorityVotesNo_startsNextRound() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
 
         assertThat(game.leadershipVoteResult())
-            .isNull();
-        assertThat((game.rounds[game.rounds.size - 2] as NormalRound).leadershipVotingRound.voteResult)
+            .isNull()
+        assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).leadershipVotingRound.voteResult)
             .isEqualTo(VoteResult(0, 5))
     }
 
@@ -114,41 +119,41 @@ internal class GameTest {
     fun nominateChancellor_works() {
         val game = Game(createUsers(5))
 
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
         assertThat(game.chancellor())
-            .isEqualTo(game.seats[1])
+            .isEqualTo(game.players[1])
     }
 
     @Test
     fun nominateChancellor_throwsException_whenChancellorAlreadyNominated() {
         val game = Game(createUsers(5))
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        assertThrows(IllegalArgumentException::class.java) { -> game.nominateChancellor(game.seats[1]) }
+        assertThrows(IllegalArgumentException::class.java) { game.nominateChancellor(game.state.players[0].id, game.players[1]) }
     }
 
     @Test
     fun voteLeadership_registersFirstVote() {
         val game = Game(createUsers(5))
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        game.voteLeadership(game.seats[0], Vote.YES)
+        game.voteLeadership(game.players[0].id, Vote.YES)
 
-        assertThat(game.currentRound.leadershipVotingRound.votes)
-            .isEqualTo(mapOf(Pair(game.seats[0],Vote.YES)))
+        assertThat(game.state.currentRound.leadershipVotingRound.votes)
+            .isEqualTo(mapOf(Pair(game.players[0], Vote.YES)))
     }
 
     @Test
     fun voteLeadership_votingTwice_throwsException() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        game.voteLeadership(users[0], Vote.YES)
+        game.voteLeadership(users[0].id, Vote.YES)
 
-        assertThrows(AlreadyVotedException::class.java) { ->
-            game.voteLeadership(users[0], Vote.NO)
+        assertThrows(AlreadyVotedException::class.java) {
+            game.voteLeadership(users[0].id, Vote.NO)
         }
     }
 
@@ -156,12 +161,10 @@ internal class GameTest {
     fun voteLeadership_voteFromNonPlayer_throwsException() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        game.voteLeadership(game.seats[0], Vote.YES)
-
-        assertThrows(NonPlayersCannotVoteException::class.java) { ->
-            game.voteLeadership(User(randomUUID(), "intruder"), Vote.NO)
+        assertThrows(IllegalArgumentException::class.java) {
+            game.voteLeadership(User(randomUUID(), "intruder").id, Vote.NO)
         }
     }
 
@@ -169,13 +172,23 @@ internal class GameTest {
     fun onThreeFailedLeadershipVotes_chaosRoundIsHeldAndNextRoundIsStarted() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
 
-        assertThat(game.currentRound.roundNumber)
+        game.nominateChancellor(game.state.players[1].id, game.players[2])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+
+        game.nominateChancellor(game.state.players[2].id, game.players[3])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+
+        assertThat(game.state.currentRound.roundNumber)
             .isEqualTo(2)
     }
 
@@ -183,11 +196,13 @@ internal class GameTest {
     fun onFailedVoteLeadership_electionTracker_increasesByOne() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
 
-        assertThat(game.electionTracker.failedElections)
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(1)
     }
 
@@ -195,24 +210,32 @@ internal class GameTest {
     fun onFailedVoteLeadership_givenThreeFailedElections_addsChaosRound() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        assertThat(game.electionTracker.failedElections)
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(1)
-        assertThat(game.rounds.size == 2)
+        assertThat(game.state.rounds.size == 2)
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        assertThat(game.electionTracker.failedElections)
+        game.nominateChancellor(game.state.players[1].id, game.players[2])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(2)
-        assertThat(game.rounds.size == 3)
+        assertThat(game.state.rounds.size == 3)
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        assertThat(game.electionTracker.failedElections)
+        game.nominateChancellor(game.state.players[2].id, game.players[3])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(0)
-        assertThat(game.rounds.size == 5)
+        assertThat(game.state.rounds.size == 5)
 
-        assertThat(game.electionTracker.failedElections)
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(0)
     }
 
@@ -220,35 +243,44 @@ internal class GameTest {
     fun chaosRound_enactsTopNextPolicy() {
         val users = createUsers(5)
         val game = Game(users)
-        game.nominateChancellor(game.seats[1])
 
-        val countPolicyTiles = game.policyTiles.size
-        val topPolicy = game.policyTiles[0]
+        val countPolicyTiles = game.state.policyTiles.size
+        val topPolicy = game.state.policyTiles[0]
 
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        assertThat(game.electionTracker.failedElections)
+        game.nominateChancellor(game.state.players[1].id, game.players[2])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(1)
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
-        assertThat(game.electionTracker.failedElections)
-            .isEqualTo(2)
-        users.forEach { u -> game.voteLeadership(u, Vote.NO) }
 
-        assertThat(game.electionTracker.failedElections)
+        game.nominateChancellor(game.state.players[1].id, game.players[2])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+        assertThat(game.state.electionTracker.failedElections)
+            .isEqualTo(2)
+
+        game.nominateChancellor(game.state.players[2].id, game.players[3])
+        users.forEach { u ->
+            game.voteLeadership(u.id, Vote.NO)
+        }
+        assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(0)
 
         if (topPolicy == PolicyTile.FASCIST) {
-            assertThat(game.enactedFasistPolicies)
+            assertThat(game.state.enactedFasistPolicies)
                 .isEqualTo(1)
         }
 
         if (topPolicy == PolicyTile.LIBERAL) {
-            assertThat(game.enactedLiberalPolicies)
+            assertThat(game.state.enactedLiberalPolicies)
                 .isEqualTo(1)
         }
 
-        assertThat(game.enactedLiberalPolicies + game.enactedFasistPolicies)
+        assertThat(game.state.enactedLiberalPolicies + game.state.enactedFasistPolicies)
             .isEqualTo(1)
-        assertThat(game.policyTiles.size)
+        assertThat(game.state.policyTiles.size)
             .isEqualTo(countPolicyTiles - 1)
     }
 
@@ -256,64 +288,129 @@ internal class GameTest {
     fun voteLeadership_throwsExceptionWhenChancellorNotNominatedYet() {
         val game = Game(createUsers(5))
 
-        assertThrows(IllegalStateException::class.java) { -> game.voteLeadership(game.seats[0], Vote.YES) }
-    }
-
-    @Test
-    fun voteLeadership_() {
-        val game = Game(createUsers(5))
-
-        assertThrows(IllegalStateException::class.java) { -> game.voteLeadership(game.seats[0], Vote.YES) }
+        assertThrows(IllegalArgumentException::class.java) {
+            game.voteLeadership(game.players[0].id, Vote.YES)
+        }
     }
 
     @Test
     fun voteLeadership_givenSuccessfulVote_thenThreePolicyTilesArePresentedToPresident() {
         val game = Game(createUsers(5))
-        val countPolicyTiles = game.policyTiles.size
-        game.nominateChancellor(game.seats[1])
-        game.seats.forEach { u -> game.voteLeadership(u, Vote.YES) }
+        val countPolicyTiles = game.state.policyTiles.size
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
+        game.players.forEach { u ->
+            game.voteLeadership(u.id, Vote.YES)
+        }
 
         assertThat(game.presidentPolicyTiles())
             .hasSize(3)
-        assertThat(game.policyTiles.size)
+        assertThat(game.state.policyTiles.size)
             .isEqualTo(countPolicyTiles - 3)
     }
 
     @Test
     fun discardPolicyTile_allowsPresidentToDiscardPolicyTile() {
         val game = Game(createUsers(5))
-        game.nominateChancellor(game.seats[1])
-        game.seats.forEach { u -> game.voteLeadership(u, Vote.YES) }
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
+        game.players.forEach { u ->
+            game.voteLeadership(u.id, Vote.YES)
+        }
 
-        val firstPolicy = game.presidentPolicyTiles()!![0]
-        game.discardPolicyTile(game.seats[0], firstPolicy)
+        val selectedTiles = game.presidentPolicyTiles()!!
+        val firstPolicy = selectedTiles[0]
+        game.discardPolicyTile(game.players[0], firstPolicy)
 
-        assertThat(game.discardedPolicyTiles)
+        assertThat(game.state.discardedPolicyTiles)
             .containsExactly(firstPolicy)
         assertThat(game.chancellorPolicyTiles())
-            .isEqualTo(listOf(game.presidentPolicyTiles()!![1],game.presidentPolicyTiles()!![2]))
+            .isEqualTo(selectedTiles.subList(1, 3))
+        assertThat(game.phaseHandler.getPhase())
+            .isEqualTo(GamePhase.CHANCELLOR_DISCARDS_POLICY_TILE)
     }
 
     @Test
-    fun discardPolicyTile_invalidUsages() {
-//        TODO("test discarding too early")
-//        TODO("test discarding by wrong person")
-//        TODO("test discarding tile that was not presented")
-//        TODO("test discarding twice")
+    fun discardPolicyTile_throwsExceptionWhenNonPresidentTriesToDiscard() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
+        game.players.forEach { u ->
+            game.voteLeadership(u.id, Vote.YES)
+        }
+
+        val selectedTiles = game.presidentPolicyTiles()!!
+        val firstPolicy = selectedTiles[0]
+
+        assertThrows(IllegalArgumentException::class.java) {
+            game.discardPolicyTile(game.players[1], firstPolicy)
+        }
     }
 
-    //TODO: test discard by wrong user (first discard must be president, second must be chancellor)
+    @Test
+    fun discardPolicyTile_throwsException_whenCalledBeforeLeaderIsElected() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.players[0].id, game.players[1])
+
+        assertThrows(IllegalArgumentException::class.java) {
+            game.on(game.players[0].id, DiscardPolicyTile(PolicyTile.FASCIST))
+        }
+    }
+
+    @Test
+    fun discardPolicyTile_throwsExceptionWhenDiscardedCardNotPresented() {
+
+    }
+
+    @Test
+    fun discardPolicyTile_allowsChancellorToDiscardPolicyTile() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
+        game.players.forEach { u ->
+            game.voteLeadership(u.id, Vote.YES)
+        }
+        val selectedTiles = game.presidentPolicyTiles()!!
+        val firstPolicy = selectedTiles[0]
+        val secondPolicy = selectedTiles[1]
+        game.discardPolicyTile(game.players[0], firstPolicy)
+
+        game.discardPolicyTile(game.players[1], secondPolicy)
+
+        assertThat(game.state.discardedPolicyTiles)
+            .containsExactly(firstPolicy, secondPolicy)
+        assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).enactedPolicy)
+            .isEqualTo(selectedTiles[2])
+
+        assertThat(game.phaseHandler.getPhase())
+            .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
+    }
+
+    @Test
+    fun discardPolicyTile_byWrongUser_throwsException() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.state.players[0].id, game.players[1])
+        game.players.forEach { u ->
+            game.voteLeadership(u.id, Vote.YES)
+        }
+        val selectedTiles = game.presidentPolicyTiles()!!
+        val firstPolicy = selectedTiles[0]
+        val secondPolicy = selectedTiles[1]
+        assertThrows(IllegalArgumentException::class.javaObjectType) {
+            game.discardPolicyTile(game.players[1], firstPolicy)
+        }
+        game.discardPolicyTile(game.players[0], firstPolicy)
+        assertThrows(IllegalArgumentException::class.javaObjectType) {
+            game.discardPolicyTile(game.players[2], secondPolicy)
+        }
+    }
 
     private fun assertAssignments(playerCount: Int, expectedLiberals: Int, expectedFascists: Int) {
         val game = Game(createUsers(playerCount))
-        assertThat(game.liberals).hasSize(expectedLiberals)
-        assertThat(game.fascists).hasSize(expectedFascists)
+        assertThat(game.state.liberals).hasSize(expectedLiberals)
+        assertThat(game.state.fascists).hasSize(expectedFascists)
 
-        assertThat((game.liberals + game.fascists).toSet())
+        assertThat((game.state.liberals + game.state.fascists).toSet())
             .hasSize(playerCount)
     }
 
-    fun createUsers(n : Int): List<User> {
+    private fun createUsers(n: Int): List<User> {
         return List(n) { i -> User(randomUUID(), "User $i") }
     }
 }
