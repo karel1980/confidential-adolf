@@ -1,7 +1,8 @@
 package de.confidential.domain
 
-import de.confidential.resources.ws.DiscardPolicyTile
-import de.confidential.resources.ws.NominateChancellor
+import de.confidential.domain.PolicyTile.FASCIST
+import de.confidential.domain.PolicyTile.LIBERAL
+import de.confidential.resources.ws.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -12,8 +13,8 @@ internal class GameTest {
     fun initiallyHas6LiberalAnd11FascistTiles() {
         val game = Game(createUsers(5))
 
-        val fascistCount = game.state.policyTiles.count { tile -> tile == PolicyTile.FASCIST }
-        val liberalCount = game.state.policyTiles.count { tile -> tile == PolicyTile.LIBERAL }
+        val fascistCount = game.state.policyTiles.count { tile -> tile == FASCIST }
+        val liberalCount = game.state.policyTiles.count { tile -> tile == LIBERAL }
 
         assertThat(fascistCount).isEqualTo(11)
         assertThat(liberalCount).isEqualTo(6)
@@ -268,12 +269,12 @@ internal class GameTest {
         assertThat(game.state.electionTracker.failedElections)
             .isEqualTo(0)
 
-        if (topPolicy == PolicyTile.FASCIST) {
+        if (topPolicy == FASCIST) {
             assertThat(game.state.enactedFasistPolicies)
                 .isEqualTo(1)
         }
 
-        if (topPolicy == PolicyTile.LIBERAL) {
+        if (topPolicy == LIBERAL) {
             assertThat(game.state.enactedLiberalPolicies)
                 .isEqualTo(1)
         }
@@ -350,7 +351,7 @@ internal class GameTest {
         game.nominateChancellor(game.players[0].id, game.players[1])
 
         assertThrows(IllegalArgumentException::class.java) {
-            game.on(game.players[0].id, DiscardPolicyTile(PolicyTile.FASCIST))
+            game.on(game.players[0].id, DiscardPolicyTile(FASCIST))
         }
     }
 
@@ -401,6 +402,77 @@ internal class GameTest {
         }
     }
 
+    @Test
+    fun chancellorRequestsVetoAndPresidentConfirms_nextRoundStarts() {
+        val game = Game(createUsers(5))
+
+        repeat(5) {
+            game.state.policyTiles = allFascist()
+            electLeadership(game)
+            game.on(game.presidentialCandidate().id, DiscardPolicyTile(game.state.currentRound.presidentPolicyTiles!![0]))
+            game.on(game.chancellor()!!.id, DiscardPolicyTile(game.state.currentRound.chancellorPolicyTiles!![0]))
+            executeCurrentExecutivePower(game)
+        }
+
+        electLeadership(game)
+        game.on(game.presidentialCandidate().id, DiscardPolicyTile(game.state.currentRound.presidentPolicyTiles!![0]))
+        game.on(game.chancellor()!!.id, RequestVeto())
+        game.on(game.presidentialCandidate().id, ConfirmVeto())
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
+        assertThat(game.state.electionTracker.failedElections)
+            .isEqualTo(1)
+    }
+
+    private fun executeCurrentExecutivePower(game: Game) {
+        val executiveAction = game.state.currentExecutiveAction()
+        when (executiveAction) {
+            ExecutivePower.INVESTIGATE_LOYALTY -> {
+                game.on(game.state.currentRound.presidentialCandidate.id, InvestigateLoyalty(game.players[0].id))
+            }
+            ExecutivePower.CALL_SPECIAL_ELECTION -> {
+                game.on(game.state.currentRound.presidentialCandidate.id, CallSpecialElection(game.chancellor()!!.id))
+            }
+            ExecutivePower.POLICY_PEEK -> {
+                game.on(game.state.currentRound.presidentialCandidate.id, PolicyPeek())
+            }
+            ExecutivePower.EXECUTION -> {
+                game.on(game.state.currentRound.presidentialCandidate.id, Execution(game.chancellor()!!.id))
+            }
+            else -> {
+            }
+        }
+    }
+
+    private fun electLeadership(game: Game) {
+        val chancellor = game.players.first { player ->
+            player.id != game.state.currentRound.presidentialCandidate.id
+        }
+
+        game.on(game.state.currentRound.presidentialCandidate.id, NominateChancellor(chancellor.id))
+        allVoteYes(game)
+    }
+
+    private fun allVoteYes(game: Game) {
+        game.players.forEach { player ->
+            game.on(player.id, LeadershipVote(Vote.YES))
+        }
+    }
+
+    @Test
+    fun chancellorRequestsVeto_notPossibleIfVetoPowerNotUnlocked() {
+        val game = Game(createUsers(5))
+        game.nominateChancellor(game.players[0].id, game.players[1])
+        game.players.forEach { player -> game.voteLeadership(player.id, Vote.YES) }
+        game.discardPolicyTile(game.players[0], game.state.currentRound.presidentPolicyTiles!![0])
+
+        assertThrows(IllegalArgumentException::class.java) {
+            game.on(game.players[1].id, RequestVeto())
+        }
+
+    }
+
     private fun assertAssignments(playerCount: Int, expectedLiberals: Int, expectedFascists: Int) {
         val game = Game(createUsers(playerCount))
         assertThat(game.state.liberals).hasSize(expectedLiberals)
@@ -409,6 +481,11 @@ internal class GameTest {
         assertThat((game.state.liberals + game.state.fascists).toSet())
             .hasSize(playerCount)
     }
+
+    private fun allFascist(): MutableList<PolicyTile> = mutableListOf(
+        FASCIST, FASCIST, FASCIST, FASCIST, FASCIST, FASCIST,
+        FASCIST, FASCIST, FASCIST, FASCIST, FASCIST
+    )
 
     private fun createUsers(n: Int): List<User> {
         return List(n) { i -> User(randomUUID(), "User $i") }

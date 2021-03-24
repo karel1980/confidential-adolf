@@ -15,7 +15,15 @@ import java.util.*
     JsonSubTypes.Type(value = GetRoomState::class, name = "GetRoomState"),
     JsonSubTypes.Type(value = NominateChancellor::class, name = "NominateChancellor"),
     JsonSubTypes.Type(value = LeadershipVote::class, name = "LeadershipVote"),
-    JsonSubTypes.Type(value = DiscardPolicyTile::class, name = "DiscardPolicyTile")
+    JsonSubTypes.Type(value = DiscardPolicyTile::class, name = "DiscardPolicyTile"),
+    JsonSubTypes.Type(value = RequestVeto::class, name = "RequestVeto"),
+    JsonSubTypes.Type(value = ConfirmVeto::class, name = "ConfirmVeto"),
+    JsonSubTypes.Type(value = DenyVeto::class, name = "DenyVeto"),
+    JsonSubTypes.Type(value = InvestigateLoyalty::class, name = "InvestigateLoyalty"),
+    JsonSubTypes.Type(value = CallSpecialElection::class, name = "CallSpecialElection"),
+    JsonSubTypes.Type(value = PolicyPeek::class, name = "PolicyPeek"),
+    JsonSubTypes.Type(value = Execution::class, name = "Execution")
+
 )
 interface IncomingMessageMixin
 interface IncomingMessage
@@ -24,9 +32,16 @@ data class TalkRequest(val message: String) : IncomingMessage
 data class IdentifyMessage(val id: UUID?, val name: String): IncomingMessage
 class Ping(): IncomingMessage
 class GetRoomState(): IncomingMessage
-class NominateChancellor(val nominatedChancellorId: UUID): IncomingMessage
-class LeadershipVote(val vote: Vote): IncomingMessage
-class DiscardPolicyTile(val policyToDiscard: PolicyTile): IncomingMessage
+data class NominateChancellor(val nominatedChancellorId: UUID): IncomingMessage
+data class LeadershipVote(val vote: Vote): IncomingMessage
+data class DiscardPolicyTile(val policyToDiscard: PolicyTile): IncomingMessage
+class RequestVeto(): IncomingMessage
+class ConfirmVeto(): IncomingMessage
+class DenyVeto(): IncomingMessage
+data class InvestigateLoyalty(val targetId: UUID): IncomingMessage
+class CallSpecialElection(val nextPresidentId: UUID): IncomingMessage
+class PolicyPeek(): IncomingMessage
+class Execution(val targetId: UUID): IncomingMessage
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
 @JsonSubTypes(

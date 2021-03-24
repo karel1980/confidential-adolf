@@ -21,15 +21,7 @@ class VotingLeadershipGamePhaseHandler(val game: Game) : GamePhaseHandler {
 
         if (voteResult.endResult == Vote.NO) {
             state.electionTracker.increaseFailedElections()
-            if (state.electionTracker.failedElections == 3) {
-                game.playChaosRound()
-                if (state.winningParty != null) {
-                    game.addNormalRoundWithRoundNumber(state.currentRound.roundNumber + 2)
-                }
-            } else {
-                game.addNormalRound()
-            }
-            game.goToPhase(GamePhase.NOMINATING_CHANCELLOR)
+            game.startNextRound()
         } else {
             state.electionTracker.resetFailedElections()
             state.currentRound.presidentPolicyTiles = state.policyTiles.take(3)

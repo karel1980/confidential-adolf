@@ -7,5 +7,7 @@ class NormalRound(val roundNumber: Int, val players: List<User>, val presidentia
     var presidentPolicyTiles: List<PolicyTile>? = null
     var chancellorPolicyTiles: List<PolicyTile>? = null
     var enactedPolicy: PolicyTile? = null
+    var vetoRequested = false
+    var vetoConfirmed: Boolean? = null
 
 }

@@ -1,5 +1,7 @@
 package de.confidential.domain
 
+import de.confidential.domain.ExecutivePower.*
+
 class GameState(val _players: List<User>) {
 
     val players: List<User> = _players.shuffled()
@@ -13,15 +15,10 @@ class GameState(val _players: List<User>) {
     val liberals: List<User>
     val fascists: List<User>
 
-    val liberalPolicyLane: List<ExecutivePower?> = when(_players.size) {
-        5,6 -> listOf(null, null, null, null, null, null)
-        7,8 -> listOf(null, null, null, null, null, null)
-        else -> listOf(null, null, null, null, null, null)
-    }
-    val fascistPolicyLane: List<ExecutivePower?> = when(_players.size) {
-        5,6 -> listOf(null, null, null, null, null, null)
-        7,8 -> listOf(null, null, null, null, null, null)
-        else -> listOf(null, null, null, null, null, null)
+    val fascistPolicyLane: List<ExecutivePower?> = when (_players.size) {
+        5, 6 -> listOf(null, null, POLICY_PEEK, EXECUTION, EXECUTION, null)
+        7, 8 -> listOf(null, INVESTIGATE_LOYALTY, CALL_SPECIAL_ELECTION, EXECUTION, EXECUTION, null)
+        else -> listOf(INVESTIGATE_LOYALTY, INVESTIGATE_LOYALTY, CALL_SPECIAL_ELECTION, EXECUTION, EXECUTION, null)
     }
 
     val hitler: User
@@ -33,6 +30,14 @@ class GameState(val _players: List<User>) {
 
     var enactedLiberalPolicies = 0
     var enactedFasistPolicies = 0
+
+    fun vetoPowerUnlocked() = enactedFasistPolicies > 4
+    fun currentExecutiveAction(): ExecutivePower? {
+        if (currentRound.enactedPolicy != PolicyTile.FASCIST) {
+            return null
+        }
+        return fascistPolicyLane[this.enactedFasistPolicies]
+    }
 
     var winningParty: PolicyTile? = null
 

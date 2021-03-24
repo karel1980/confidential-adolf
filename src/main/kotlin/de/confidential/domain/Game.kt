@@ -17,6 +17,7 @@ class Game(_players: List<User>) {
         VotingLeadershipGamePhaseHandler(this),
         PresidentDiscardsPolicyGamePhaseHandler(this),
         ChancellorDiscardsPolicyGamePhaseHandler(this),
+        VetoRequestedGamePhaseHandler(this),
         ExecutivePowerGamePhaseHandler(this),
         GameOverGamePhaseHandler()
     )
@@ -24,11 +25,13 @@ class Game(_players: List<User>) {
         .toMap()
 
     var phaseHandler: GamePhaseHandler = phaseHandlers[GamePhase.NOMINATING_CHANCELLOR]!!
+    fun phase() = phaseHandler.getPhase()
+
     val players = state.players
 
     companion object {
-        val LIBERAL_POLICIES_NEEDED_TO_WIN = 5
-        val FASCIST_POLICIES_NEEDED_TO_WIN = 6
+        const val LIBERAL_POLICIES_NEEDED_TO_WIN = 5
+        const val FASCIST_POLICIES_NEEDED_TO_WIN = 6
     }
 
     fun presidentialCandidate() = state.currentRound.presidentialCandidate
@@ -53,11 +56,22 @@ class Game(_players: List<User>) {
         return state.currentRound.leadershipVotingRound.voteResult
     }
 
-    fun addNormalRound() {
-        addNormalRoundWithRoundNumber(state.currentRound.roundNumber + 1)
+    fun startNextRound() {
+        if (state.electionTracker.failedElections == 3) {
+            playChaosRound()
+            if (state.winningParty != null) {
+                startNextRoundWithRoundNumber(state.currentRound.roundNumber + 2)
+            } else {
+                goToPhase(GamePhase.GAME_OVER)
+            }
+        } else {
+            startNextRoundWithRoundNumber(state.currentRound.roundNumber + 1)
+        }
+
+
     }
 
-    fun addNormalRoundWithRoundNumber(roundNumber: Int) {
+    private fun startNextRoundWithRoundNumber(roundNumber: Int) {
         //TODO: make sure state.policyTiles contains at least three cards.
         // (if < 3 remain, add state.discardedPolicyTiles back to policy tiles and shuffle)
 
@@ -67,9 +81,10 @@ class Game(_players: List<User>) {
             state.players[(state.players.indexOf(state.currentRound.presidentialCandidate) + 1) % state.players.size]
         )
         state.rounds.add(state.currentRound)
+        goToPhase(GamePhase.NOMINATING_CHANCELLOR)
     }
 
-    public fun playChaosRound() {
+    fun playChaosRound() {
         state.rounds.add(ChaosRound(state.currentRound.roundNumber + 1))
         state.electionTracker.resetFailedElections()
 
@@ -116,27 +131,11 @@ class Game(_players: List<User>) {
     }
 
     fun allPoliciesEnacted(enactedPolicy: PolicyTile): Boolean {
-        if (enactedPolicy== LIBERAL) {
-            return state.liberalPolicyLane.size == state.enactedLiberalPolicies
+        if (enactedPolicy == LIBERAL) {
+            return state.enactedLiberalPolicies == LIBERAL_POLICIES_NEEDED_TO_WIN
         } else {
-            return state.fascistPolicyLane.size == state.enactedFasistPolicies
+            return state.enactedFasistPolicies == FASCIST_POLICIES_NEEDED_TO_WIN
         }
-    }
-
-    private fun getPolicyLane(policy: PolicyTile): List<ExecutivePower?> {
-        if (policy == LIBERAL) {
-            return state.liberalPolicyLane
-        } else {
-            return state.fascistPolicyLane
-        }
-    }
-
-    fun getExecutiveAction(): ExecutivePower? {
-        val policy = state.currentRound.enactedPolicy!!
-        if (policy == LIBERAL) {
-            return state.liberalPolicyLane[state.enactedLiberalPolicies]
-        }
-        return state.fascistPolicyLane[state.enactedFasistPolicies]
     }
 
 }

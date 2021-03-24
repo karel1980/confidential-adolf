@@ -2,6 +2,7 @@ package de.confidential.domain
 
 import de.confidential.resources.ws.DiscardPolicyTile
 import de.confidential.resources.ws.IncomingMessage
+import de.confidential.resources.ws.RequestVeto
 import java.util.*
 
 class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandler {
@@ -9,14 +10,18 @@ class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandle
     val state = game.state
 
     override fun on(playerId: UUID, msg: IncomingMessage) {
-        if (msg !is DiscardPolicyTile) {
-            throw IllegalArgumentException("Only discard policy tile allowed right now")
-        }
-
         if (playerId != state.currentRound.chancellor!!.id) {
-            throw IllegalArgumentException("Only the chancellor can discard a policy right now")
+            throw IllegalArgumentException("Only the chancellor can play right now")
         }
 
+        when(msg) {
+            is DiscardPolicyTile -> handleDiscard(msg)
+            is RequestVeto -> handleVetoRequest()
+            else -> throw IllegalStateException("Only DiscardPolicyTile and RequestVeto are allowed right now")
+        }
+    }
+
+    fun handleDiscard(msg: DiscardPolicyTile) {
         val remaining = state.currentRound.chancellorPolicyTiles!!.toMutableList()
         if (!remaining.remove(msg.policyToDiscard)) {
             throw IllegalArgumentException("Could not discard policy ${msg.policyToDiscard}")
@@ -37,13 +42,24 @@ class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandle
             return
         }
 
-        val executiveAction = game.getExecutiveAction()
+        val executiveAction = state.currentExecutiveAction()
         if (executiveAction == null) {
-            game.addNormalRound()
+            game.startNextRound()
             game.goToPhase(GamePhase.NOMINATING_CHANCELLOR)
         } else {
             game.goToPhase(GamePhase.PRESIDENT_EXECUTIVE_POWER)
         }
+    }
+
+    fun handleVetoRequest() {
+        if (!state.vetoPowerUnlocked()) {
+            throw IllegalArgumentException("Veto power is not unlocked yet")
+        }
+        if (state.currentRound.vetoRequested) {
+            throw IllegalArgumentException("Veto already requested. Once it's denied you're not allowed to try again")
+        }
+        state.currentRound.vetoRequested = true
+        game.goToPhase(GamePhase.VETO_REQUESTED)
     }
 
     override fun getPhase(): GamePhase {
