@@ -67,24 +67,53 @@ class Game(_players: List<User>) {
         } else {
             startNextRoundWithRoundNumber(state.currentRound.roundNumber + 1)
         }
-
-
     }
 
-    private fun startNextRoundWithRoundNumber(roundNumber: Int) {
+    private fun startNextRoundWithRoundNumber(roundNumber: Int, nextPresidentId: UUID = determineNextPresidentId()) {
         //TODO: make sure state.policyTiles contains at least three cards.
         // (if < 3 remain, add state.discardedPolicyTiles back to policy tiles and shuffle)
 
         state.currentRound = NormalRound(
             roundNumber, players,
             //TODO: make next presidential candidate selection should take killed players into account
-            state.players[(state.players.indexOf(state.currentRound.presidentialCandidate) + 1) % state.players.size]
+            players.first { it.id == nextPresidentId }
         )
         state.rounds.add(state.currentRound)
         goToPhase(GamePhase.NOMINATING_CHANCELLOR)
     }
 
-    fun playChaosRound() {
+    fun startSpecialElectionRound(nextPresidentId: UUID) {
+        startNextRoundWithRoundNumber(state.currentRound.roundNumber + 1, nextPresidentId);
+    }
+
+    private fun determineNextPresidentId(): UUID {
+        val lastNonSpecialPresident = determineLastNonSpecialPresidentId()
+        val lastNonSpecialPresidentIdx = players.indexOfFirst { it -> it.id == lastNonSpecialPresident }
+        val firstCandidateIdx = (lastNonSpecialPresidentIdx + 1) % players.size
+        val candidates = players.subList(firstCandidateIdx, players.size) + players.subList(0, firstCandidateIdx)
+        return candidates.first { it.id !in state.deadPlayers }.id
+    }
+
+    private fun determineLastNonSpecialPresidentId(): UUID {
+        if (state.rounds.size > 1) {
+            val previousRound = state.rounds[state.rounds.size - 2]
+            if (roundEndedWithSpecialElection(previousRound)) {
+                return (previousRound as NormalRound).presidentialCandidate.id
+            }
+        }
+        return state.currentRound.presidentialCandidate.id
+    }
+
+    private fun roundEndedWithSpecialElection(round: Round): Boolean {
+        if (round is NormalRound) {
+            if (round.performedExecutiveAction == ExecutivePower.CALL_SPECIAL_ELECTION) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun playChaosRound() {
         state.rounds.add(ChaosRound(state.currentRound.roundNumber + 1))
         state.electionTracker.resetFailedElections()
 
@@ -136,6 +165,10 @@ class Game(_players: List<User>) {
         } else {
             return state.enactedFasistPolicies == FASCIST_POLICIES_NEEDED_TO_WIN
         }
+    }
+
+    fun previousRound(): Round {
+        return state.rounds[state.rounds.size-2]
     }
 
 }

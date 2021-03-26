@@ -408,13 +408,13 @@ internal class GameTest {
 
         repeat(5) {
             game.state.policyTiles = allFascist()
-            electLeadership(game)
+            voteLeaders(game)
             game.on(game.presidentialCandidate().id, DiscardPolicyTile(game.state.currentRound.presidentPolicyTiles!![0]))
             game.on(game.chancellor()!!.id, DiscardPolicyTile(game.state.currentRound.chancellorPolicyTiles!![0]))
             executeCurrentExecutivePower(game)
         }
 
-        electLeadership(game)
+        voteLeaders(game)
         game.on(game.presidentialCandidate().id, DiscardPolicyTile(game.state.currentRound.presidentPolicyTiles!![0]))
         game.on(game.chancellor()!!.id, RequestVeto())
         game.on(game.presidentialCandidate().id, ConfirmVeto())
@@ -425,38 +425,150 @@ internal class GameTest {
             .isEqualTo(1)
     }
 
+    @Test
+    fun executiveAction_policyPeek() {
+        val game = Game(createUsers(5))
+
+        // round 0
+        game.state.policyTiles = allFascist()
+        voteLeaders(game)
+        enactPolicy(game)
+
+        // round 1
+        game.state.policyTiles = allFascist()
+        voteLeaders(game)
+        enactPolicy(game)
+
+        // round 2
+        game.state.policyTiles = allFascist()
+        voteLeaders(game)
+        enactPolicy(game)
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.PRESIDENT_EXECUTIVE_POWER)
+
+        game.on(game.presidentialCandidate().id, PolicyPeek())
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
+        assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).performedExecutiveAction)
+            .isEqualTo(ExecutivePower.POLICY_PEEK)
+    }
+
+    @Test
+    fun executiveAction_investigateLoyalty() {
+        val game = Game(createUsers(7))
+
+        // round 0
+        game.state.policyTiles = allFascist()
+        voteLeaders(game)
+        enactPolicy(game)
+
+        // round 1
+        game.state.policyTiles = allFascist()
+        voteLeaders(game)
+        enactPolicy(game)
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.PRESIDENT_EXECUTIVE_POWER)
+
+        game.on(game.presidentialCandidate().id, InvestigateLoyalty(game.chancellor()!!.id))
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
+        assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).performedExecutiveAction)
+            .isEqualTo(ExecutivePower.INVESTIGATE_LOYALTY)
+    }
+
+    @Test
+    fun executiveAction_specialElection() {
+        val game = Game(createUsers(7))
+
+        // round 0
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        // round 1
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        // round 2
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
+        assertThat(game.presidentialCandidate().id)
+            .isEqualTo((game.previousRound() as NormalRound).specialElectionPresidentId)
+        assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).performedExecutiveAction)
+            .isEqualTo(ExecutivePower.CALL_SPECIAL_ELECTION)
+    }
+
+    @Test
+    fun executiveAction_execution() {
+        val game = Game(createUsers(5))
+
+        // round 0
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        // round 1
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        // round 2
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        // round 3
+        game.state.policyTiles = allFascist()
+        playFullRound(game)
+
+        assertThat(game.phase())
+            .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
+        assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).executedPlayer != null)
+    }
+
+    private fun playFullRound(game: Game) {
+        voteLeaders(game)
+        enactPolicy(game)
+        executeCurrentExecutivePower(game)
+    }
+
+
+    private fun enactPolicy(game: Game) {
+        game.on(game.presidentialCandidate().id, DiscardPolicyTile(game.presidentPolicyTiles()!![0]))
+        game.on(game.chancellor()!!.id, DiscardPolicyTile(game.chancellorPolicyTiles()!![0]))
+    }
+
+    private fun voteLeaders(game: Game) {
+        game.nominateChancellor(
+            game.presidentialCandidate().id,
+            game.state.players.first { it.id != game.state.currentRound.presidentialCandidate.id })
+        game.players.forEach {
+            game.voteLeadership(it.id, Vote.YES)
+        }
+    }
+
     private fun executeCurrentExecutivePower(game: Game) {
         val executiveAction = game.state.currentExecutiveAction()
         when (executiveAction) {
-            ExecutivePower.INVESTIGATE_LOYALTY -> {
+            ExecutivePower.INVESTIGATE_LOYALTY ->
                 game.on(game.state.currentRound.presidentialCandidate.id, InvestigateLoyalty(game.players[0].id))
-            }
-            ExecutivePower.CALL_SPECIAL_ELECTION -> {
+            ExecutivePower.CALL_SPECIAL_ELECTION ->
                 game.on(game.state.currentRound.presidentialCandidate.id, CallSpecialElection(game.chancellor()!!.id))
-            }
-            ExecutivePower.POLICY_PEEK -> {
+            ExecutivePower.POLICY_PEEK ->
                 game.on(game.state.currentRound.presidentialCandidate.id, PolicyPeek())
-            }
             ExecutivePower.EXECUTION -> {
-                game.on(game.state.currentRound.presidentialCandidate.id, Execution(game.chancellor()!!.id))
+                val playerToKill = game.players.first {
+                    it.id != game.state.hitler.id
+                            && it.id != game.presidentialCandidate().id
+                            && it.id !in game.state.deadPlayers
+                }.id
+                game.on(game.state.currentRound.presidentialCandidate.id, Execution(playerToKill))
             }
             else -> {
             }
-        }
-    }
-
-    private fun electLeadership(game: Game) {
-        val chancellor = game.players.first { player ->
-            player.id != game.state.currentRound.presidentialCandidate.id
-        }
-
-        game.on(game.state.currentRound.presidentialCandidate.id, NominateChancellor(chancellor.id))
-        allVoteYes(game)
-    }
-
-    private fun allVoteYes(game: Game) {
-        game.players.forEach { player ->
-            game.on(player.id, LeadershipVote(Vote.YES))
         }
     }
 

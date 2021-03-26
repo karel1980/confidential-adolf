@@ -1,10 +1,11 @@
 package de.confidential.domain
 
-import de.confidential.domain.ExecutivePower.*
+import java.util.*
 
 class GameState(val _players: List<User>) {
 
     val players: List<User> = _players.shuffled()
+    val deadPlayers = mutableListOf<UUID>()
 
     var policyTiles: MutableList<PolicyTile> =
         (List(6) { PolicyTile.LIBERAL } + List(11) { PolicyTile.FASCIST })
@@ -15,10 +16,22 @@ class GameState(val _players: List<User>) {
     val liberals: List<User>
     val fascists: List<User>
 
-    val fascistPolicyLane: List<ExecutivePower?> = when (_players.size) {
-        5, 6 -> listOf(null, null, POLICY_PEEK, EXECUTION, EXECUTION, null)
-        7, 8 -> listOf(null, INVESTIGATE_LOYALTY, CALL_SPECIAL_ELECTION, EXECUTION, EXECUTION, null)
-        else -> listOf(INVESTIGATE_LOYALTY, INVESTIGATE_LOYALTY, CALL_SPECIAL_ELECTION, EXECUTION, EXECUTION, null)
+    private val executivePowersPerFascistPolicy: Map<Int, ExecutivePower?> = when (_players.size) {
+        5, 6 -> mapOf(
+            Pair(2, ExecutivePower.POLICY_PEEK),
+            Pair(3, ExecutivePower.EXECUTION),
+            Pair(4, ExecutivePower.EXECUTION))
+        7, 8 -> mapOf(
+            Pair(1, ExecutivePower.INVESTIGATE_LOYALTY),
+            Pair(2, ExecutivePower.CALL_SPECIAL_ELECTION),
+            Pair(3, ExecutivePower.EXECUTION),
+            Pair(4, ExecutivePower.EXECUTION))
+        else -> mapOf(
+            Pair(0, ExecutivePower.INVESTIGATE_LOYALTY),
+            Pair(1, ExecutivePower.INVESTIGATE_LOYALTY),
+            Pair(2, ExecutivePower.CALL_SPECIAL_ELECTION),
+            Pair(3, ExecutivePower.EXECUTION),
+            Pair(4, ExecutivePower.EXECUTION))
     }
 
     val hitler: User
@@ -36,7 +49,7 @@ class GameState(val _players: List<User>) {
         if (currentRound.enactedPolicy != PolicyTile.FASCIST) {
             return null
         }
-        return fascistPolicyLane[this.enactedFasistPolicies]
+        return executivePowersPerFascistPolicy[this.enactedFasistPolicies - 1]
     }
 
     var winningParty: PolicyTile? = null
@@ -51,6 +64,8 @@ class GameState(val _players: List<User>) {
             10 -> 6
             else -> throw IllegalArgumentException("Unexpected number of players")
         }
+
+        executivePowersPerFascistPolicy
 
         val randomized = players.shuffled()
         liberals = randomized.subList(0, liberalCount)

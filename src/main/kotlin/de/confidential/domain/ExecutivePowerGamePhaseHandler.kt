@@ -24,33 +24,43 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
 
     private fun investigateLoyalty(msg: InvestigateLoyalty) {
         checkExecutiveAction(INVESTIGATE_LOYALTY)
-        //TODO: do something to communicate the loyalty of the indicated person to the president
+        state.currentRound.performedExecutiveAction = INVESTIGATE_LOYALTY
+        game.state.currentRound.investigatedPlayerId = msg.targetId
         game.startNextRound()
     }
 
     private fun callSpecialElection(msg: CallSpecialElection) {
         checkExecutiveAction(CALL_SPECIAL_ELECTION)
+        state.currentRound.performedExecutiveAction = CALL_SPECIAL_ELECTION
         if (game.presidentialCandidate().id == msg.nextPresidentId) {
             throw IllegalArgumentException("President cannot apoint himself in a special election")
         }
-        //TODO: start a new round with the appointed president
-        //TODO: make sure the round after that proceeds with the normal president nomination order
-        game.startNextRound()
+        game.state.currentRound.specialElectionPresidentId = msg.nextPresidentId
+        game.startSpecialElectionRound(msg.nextPresidentId)
     }
 
     private fun policyPeek(msg: PolicyPeek) {
         checkExecutiveAction(POLICY_PEEK)
-        //TODO: do something to communicate the peek result to the president
+        state.currentRound.performedExecutiveAction = POLICY_PEEK
         game.startNextRound()
     }
 
     private fun execution(msg: Execution) {
         checkExecutiveAction(EXECUTION)
-        //TODO: mark the indicated person as dead
-        //TODO: if hitler is dead, indicate the winner
-        // TODO: fix the code that picks the next president
+        if (msg.targetId in state.deadPlayers) {
+            throw IllegalArgumentException("He's already dead, Jim")
+        }
 
-        game.startNextRound()
+        state.currentRound.performedExecutiveAction = EXECUTION
+        state.currentRound.executedPlayer = msg.targetId
+        state.deadPlayers.add(msg.targetId)
+
+        if (state.hitler.id in state.deadPlayers) {
+            game.state.winningParty = PolicyTile.LIBERAL
+            game.goToPhase(GamePhase.GAME_OVER)
+        } else {
+            game.startNextRound()
+        }
     }
 
     private fun checkExecutiveAction(action: ExecutivePower) {
