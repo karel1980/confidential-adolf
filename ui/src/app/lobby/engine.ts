@@ -2,9 +2,9 @@ import {Store} from "@ngrx/store";
 import {WebsocketService, WsConnection} from "./websocket.service";
 import {Subscription} from "rxjs";
 
-
 export interface Message {
   type: string;
+
   [key: string]: any; // this makes types worthless. should split type from payload and use Message<PayloadType> or something
 }
 

@@ -1,11 +1,13 @@
 package de.confidential.domain
 
-class VotingRound(val voters: List<User>) {
+import java.util.*
 
-    val votes = mutableMapOf<User, Vote>()
+class VotingRound(val voters: List<UUID>) {
+
+    val votes = mutableMapOf<UUID, Vote>()
     var voteResult: VoteResult? = null
 
-    fun registerVote(voter: User, vote: Vote) {
+    fun registerVote(voter: UUID, vote: Vote) {
         if (voter in votes.keys) {
             throw AlreadyVotedException()
         }

@@ -1,7 +1,7 @@
 import {createReducer, on} from '@ngrx/store';
 import {goToRoom, identified, requestRoomSync, setUser, syncRoom, userAdded} from './lobby.actions';
 
-export interface LobbyState {
+export interface RoomState {
   messages: any[],
   user: User,
   roomId: string,
@@ -15,17 +15,51 @@ export interface User {
   name: string
 }
 
-export interface Room {
-  users: User[]
+export interface UserTO {
+  id: string,
+  name: string,
+  dead: boolean
 }
 
-function createRoom() {
+export interface Room {
+  users: User[],
+  game: GameTO
+}
+
+export interface GameTO {
+  players: UserTO[],
+  rounds: RoundTO[],
+  liberalPolicies: number,
+  fascistPolicies: number,
+  phase: string,
+  winner: string
+}
+
+export interface RoundTO {
+  roundNumber: string,
+  president: string,
+  chancellor: string
+}
+
+function createRoom(): Room {
   return {
-    users: []
+    users: [],
+    game: createGame()
   };
 }
 
-const initialState: LobbyState = {
+function createGame(): GameTO {
+  return {
+    players: [],
+    rounds: [],
+    liberalPolicies: 0,
+    fascistPolicies: 0,
+    phase: null,
+    winner: null,
+  }
+}
+
+const initialState: RoomState = {
   messages: [],
   user: {
     id: null,

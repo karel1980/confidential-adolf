@@ -9,7 +9,7 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
     private val state = game.state
 
     override fun on(playerId: UUID, msg: IncomingMessage) {
-        if (playerId != state.currentRound.presidentialCandidate.id) {
+        if (playerId != state.currentRound.presidentialCandidate) {
             throw IllegalArgumentException("Only the president can use executive power")
         }
 
@@ -32,7 +32,7 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
     private fun callSpecialElection(msg: CallSpecialElection) {
         checkExecutiveAction(CALL_SPECIAL_ELECTION)
         state.currentRound.performedExecutiveAction = CALL_SPECIAL_ELECTION
-        if (game.presidentialCandidate().id == msg.nextPresidentId) {
+        if (game.presidentialCandidate() == msg.nextPresidentId) {
             throw IllegalArgumentException("President cannot apoint himself in a special election")
         }
         game.state.currentRound.specialElectionPresidentId = msg.nextPresidentId
@@ -42,6 +42,7 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
     private fun policyPeek(msg: PolicyPeek) {
         checkExecutiveAction(POLICY_PEEK)
         state.currentRound.performedExecutiveAction = POLICY_PEEK
+        state.currentRound.peekedTiles = game.state.policyTiles.take(3)
         game.startNextRound()
     }
 
@@ -55,7 +56,7 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
         state.currentRound.executedPlayer = msg.targetId
         state.deadPlayers.add(msg.targetId)
 
-        if (state.hitler.id in state.deadPlayers) {
+        if (state.hitler in state.deadPlayers) {
             game.state.winningParty = PolicyTile.LIBERAL
             game.goToPhase(GamePhase.GAME_OVER)
         } else {

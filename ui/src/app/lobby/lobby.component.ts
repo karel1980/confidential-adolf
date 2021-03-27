@@ -2,7 +2,7 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Subject} from 'rxjs';
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {goToRoom, setUser} from "./lobby.actions";
-import {LobbyState} from "./lobby.reducer";
+import {RoomState} from "./lobby.reducer";
 import {Router} from "@angular/router";
 import {HttpClient} from "@angular/common/http";
 import {takeUntil} from "rxjs/operators";
@@ -28,8 +28,8 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const lobbySelector = createFeatureSelector('lobby');
-    const roomSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.roomId);
-    const userSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.user);
+    const roomSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.roomId);
+    const userSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.user);
 
     // TODO: look into ngrx router features. For now this will do:
     this.store.select(roomSelector)

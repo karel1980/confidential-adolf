@@ -1,5 +1,6 @@
 package de.confidential.resources
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
 import de.confidential.domain.Room
 import de.confidential.domain.RoomRepository
 import de.confidential.domain.UserRepository
@@ -22,6 +23,7 @@ class RoomEndpoint {
     @Inject
     @field: Default
     lateinit var jsonUtil: JsonUtil
+
     @Inject
     @field: Default
     lateinit var comms: Comms
@@ -29,6 +31,7 @@ class RoomEndpoint {
     @Inject
     @field: Default
     lateinit var userRepository: UserRepository
+
     @Inject
     @field: Default
     lateinit var roomRepository: RoomRepository
@@ -39,7 +42,19 @@ class RoomEndpoint {
         val handlers = listOf(
             IdentifyHandler(comms, userRepository),
             PingHandler(comms),
-            GetRoomStateHandler(comms)
+            GetRoomStateHandler(comms),
+            StartGameHandler(comms),
+            GenericRoomMessageHandler(NominateChancellor::class.java),
+            GenericRoomMessageHandler(LeadershipVote::class.java),
+            GenericRoomMessageHandler(DiscardPolicyTile::class.java),
+            GenericRoomMessageHandler(RequestVeto::class.java),
+            GenericRoomMessageHandler(ConfirmVeto::class.java),
+            GenericRoomMessageHandler(DenyVeto::class.java),
+            GenericRoomMessageHandler(InvestigateLoyalty::class.java),
+            GenericRoomMessageHandler(CallSpecialElection::class.java),
+            GenericRoomMessageHandler(PolicyPeek::class.java),
+            GenericRoomMessageHandler(Execution::class.java)
+
         )
         roomHandlerMap = handlers.map { h -> h.canHandle() to h }.toMap()
     }
@@ -86,6 +101,17 @@ class RoomEndpoint {
         val maybeRoom = session.userProperties["room"] as Room?
         val room = maybeRoom as Room
         handler::class.members.find { it.name == "handle" }!!.call(handler, session, room, msg)
+
+        //TODO: also send event of what happened?
+        //comms.sendToAllMembers(createRoomState(room, ), room.id)
+        //Send user-specific state to each ember
+        comms.sessionsByRoomId[room.id]
+            ?.filter { SessionUtil.isIdentified(session) }
+            ?.forEach { comms.sendDirect(createRoomState(room, SessionUtil.getUserId(it)), it) }
+    }
+
+    private fun createRoomState(room: Room, user: UUID): OutgoingMessage {
+        return room.getState(user)
     }
 
     fun requiresIdentification(handlerRoom: RoomMessageHandler<*>) = handlerRoom.canHandle() == IdentifyRequest::class.toString()

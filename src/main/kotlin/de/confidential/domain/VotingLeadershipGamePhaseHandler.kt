@@ -14,7 +14,7 @@ class VotingLeadershipGamePhaseHandler(val game: Game) : GamePhaseHandler {
             throw IllegalArgumentException("Only LeadershipVote messages accepted")
         }
 
-        val player = state.players.find { p -> p.id == playerId }!!
+        val player = state.players.find { it == playerId }!!
         state.currentRound.leadershipVotingRound.registerVote(player, msg.vote)
 
         val voteResult = state.currentRound.leadershipVotingRound.voteResult ?: return

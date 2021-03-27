@@ -13,9 +13,9 @@ class NominatingChancellorGamePhaseHandler(val _game: Game) : GamePhaseHandler {
             throw IllegalArgumentException("only accepting nominatechancellor messages")
         }
 
-        val nominee = state.players.find { u -> u.id == msg.nominatedChancellorId }!!
+        val nominee = state.players.find { it == msg.nominatedChancellorId }!!
 
-        if (nominee.id == _game.presidentialCandidate().id) {
+        if (nominee == _game.presidentialCandidate()) {
             throw IllegalArgumentException("presidential candidate cannot be nominated as chancellor")
         }
 

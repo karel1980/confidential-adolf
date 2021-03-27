@@ -14,7 +14,7 @@ class PresidentDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandler
             throw IllegalArgumentException("Only discard policy tile allowed right now")
         }
 
-        if (playerId != state.currentRound.presidentialCandidate.id) {
+        if (playerId != state.currentRound.presidentialCandidate) {
             throw IllegalArgumentException("Only the president can discard a policy")
         }
 

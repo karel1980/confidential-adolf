@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Engine, Message} from "../lobby/engine";
-import {LobbyState, Room, User} from "../lobby/lobby.reducer";
+import {Room, RoomState, User} from "../lobby/lobby.reducer";
 import {WebsocketService} from "../lobby/websocket.service";
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -46,6 +46,16 @@ const RoomStateHandler = {
     store.dispatch(syncRoom(message))
 }
 
+enum Vote {
+  YES = 'YES',
+  NO = 'NO'
+}
+
+enum PolicyTile {
+  LIBERAL = 'LIBERAL',
+  FASCIST = 'FASCIST'
+}
+
 @Component({
   selector: 'app-room',
   templateUrl: './room.component.html',
@@ -62,6 +72,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   engine: Engine;
   room: Room;
 
+  Vote = Vote;
+  PolicyTile = PolicyTile;
+
   constructor(private ws: WebsocketService, private store: Store, private router: Router,
               private route: ActivatedRoute, private roomService: RoomService) {
     this.engine = new Engine([
@@ -74,23 +87,25 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     const lobbySelector = createFeatureSelector('lobby');
-    const userSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.user);
-    const roomSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.room);
-    const identifiedSelector = createSelector(lobbySelector, (lobbyState: LobbyState) => lobbyState.identified);
+    const userSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.user);
+    const roomSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.room);
+    const identifiedSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.identified);
 
     this.roomId = this.route.snapshot.params['roomId'];
 
     const userStr = localStorage.getItem('user');
     if (userStr) {
       this.user = JSON.parse(userStr);
-      this.roomService.checkMembership(this.roomId, this.user.id)
-        .subscribe(
-          (result) => {
-            if (result) {
-              this.connected = true;
-              this.connect();
-            } // else connected is false and identfication form is shown
-          });
+      if (this.user.name) {
+        this.roomService.checkMembership(this.roomId, this.user.id)
+          .subscribe(
+            (result) => {
+              if (result) {
+                this.connected = true;
+                this.connect();
+              } // else connected is false and identification form is shown
+            });
+      }
     }
 
     this.store.select(userSelector).subscribe(
@@ -108,7 +123,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     )
 
     this.store.select(identifiedSelector).subscribe(
-      (identified) =>{
+      (identified) => {
         if (identified) {
           this.engine.send({'_type': 'GetRoomState'});
         }
@@ -133,6 +148,54 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   onPingClicked() {
     this.engine.send({"_type": "Ping"});
+  }
+
+  onGetRoomStateClicked() {
+    this.engine.send({"_type": "GetRoomState"});
+  }
+
+  onStartGameClicked() {
+    this.engine.send({"_type": "StartGame"});
+  }
+
+  onNominateChancellor(playerId: string) {
+    this.engine.send({"_type": "NominateChancellor", nominatedChancellorId: playerId})
+  }
+
+  onVoteLeadership(vote: Vote) {
+    this.engine.send({"_type": "LeadershipVote", vote})
+  }
+
+  onDiscardPolicyTile(tile: PolicyTile) {
+    this.engine.send({"_type": "DiscardPolicyTile", policyToDiscard: tile})
+  }
+
+  onRequestVeto() {
+    this.engine.send({"_type": "RequestVeto"})
+  }
+
+  onConfirmVeto() {
+    this.engine.send({"_type": "ConfirmVeto"})
+  }
+
+  onDenyVeto() {
+    this.engine.send({"_type": "DenyVeto"})
+  }
+
+  onInvestigateLoyalty(targetId: string) {
+    this.engine.send({"_type": "InvestigateLoyalty", targetId})
+  }
+
+  onCallSpecialElection(nextPresidentId: string) {
+    this.engine.send({"_type": "CallSpecialElection", nextPresidentId})
+  }
+
+  onPolicyPeek() {
+    this.engine.send({"_type": "PolicyPeek"})
+  }
+
+  onExecution(targetId: string) {
+    this.engine.send({"_type": "Execution", targetId})
   }
 
   ngOnDestroy() {

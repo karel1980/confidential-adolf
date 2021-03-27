@@ -2,9 +2,9 @@ package de.confidential.domain
 
 import java.util.*
 
-class GameState(val _players: List<User>) {
+class GameState(val _players: List<UUID>) {
 
-    val players: List<User> = _players.shuffled()
+    val players: List<UUID> = _players.shuffled()
     val deadPlayers = mutableListOf<UUID>()
 
     var policyTiles: MutableList<PolicyTile> =
@@ -13,8 +13,8 @@ class GameState(val _players: List<User>) {
             .toMutableList()
     var discardedPolicyTiles = mutableListOf<PolicyTile>()
 
-    val liberals: List<User>
-    val fascists: List<User>
+    val liberals: List<UUID>
+    val fascists: List<UUID>
 
     private val executivePowersPerFascistPolicy: Map<Int, ExecutivePower?> = when (_players.size) {
         5, 6 -> mapOf(
@@ -34,7 +34,7 @@ class GameState(val _players: List<User>) {
             Pair(4, ExecutivePower.EXECUTION))
     }
 
-    val hitler: User
+    val hitler: UUID
 
     var currentRound: NormalRound = NormalRound(1, players, players[0])
     val rounds = mutableListOf<Round>()

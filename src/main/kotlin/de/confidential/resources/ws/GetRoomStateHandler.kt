@@ -9,6 +9,7 @@ class GetRoomStateHandler(private val comms: Comms): RoomMessageHandler<GetRoomS
     }
 
     override fun handle(session: Session, room: Room, msg: GetRoomState) {
-        comms.sendDirect(RoomState(room.members), session)
+        val user = SessionUtil.getUserId(session)
+        comms.sendDirect(room.getState(user), session)
     }
 }

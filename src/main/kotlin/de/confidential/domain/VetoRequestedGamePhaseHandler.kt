@@ -12,7 +12,7 @@ class VetoRequestedGamePhaseHandler(val game: Game) : GamePhaseHandler {
     val state = game.state
 
     override fun on(playerId: UUID, msg: IncomingMessage) {
-        if (playerId != state.currentRound.presidentialCandidate.id) {
+        if (playerId != state.currentRound.presidentialCandidate) {
             throw IllegalArgumentException("Only the president is allowed to act right now")
         }
 

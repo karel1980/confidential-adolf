@@ -8,7 +8,7 @@ import de.confidential.resources.ws.LeadershipVote
 import de.confidential.resources.ws.NominateChancellor
 import java.util.*
 
-class Game(_players: List<User>) {
+class Game(_players: List<UUID>) {
 
     val state = GameState(_players)
 
@@ -37,8 +37,8 @@ class Game(_players: List<User>) {
     fun presidentialCandidate() = state.currentRound.presidentialCandidate
     fun chancellor() = state.currentRound.chancellor
 
-    fun nominateChancellor(playerId: UUID, nominee: User) {
-        this.on(playerId, NominateChancellor(nominee.id))
+    fun nominateChancellor(playerId: UUID, nominee: UUID) {
+        this.on(playerId, NominateChancellor(nominee))
     }
 
     fun voteLeadership(playerId: UUID, vote: Vote) {
@@ -46,7 +46,7 @@ class Game(_players: List<User>) {
     }
 
     fun on(player: UUID, msg: IncomingMessage) {
-        if (!(player in players.map { u -> u.id })) {
+        if (!(player in players)) {
             throw IllegalArgumentException("$player id is not a player in this game")
         }
         phaseHandler.on(player, msg)
@@ -75,8 +75,8 @@ class Game(_players: List<User>) {
 
         state.currentRound = NormalRound(
             roundNumber, players,
-            //TODO: make next presidential candidate selection should take killed players into account
-            players.first { it.id == nextPresidentId }
+            //TODO: assert not dead?
+            nextPresidentId
         )
         state.rounds.add(state.currentRound)
         goToPhase(GamePhase.NOMINATING_CHANCELLOR)
@@ -88,20 +88,20 @@ class Game(_players: List<User>) {
 
     private fun determineNextPresidentId(): UUID {
         val lastNonSpecialPresident = determineLastNonSpecialPresidentId()
-        val lastNonSpecialPresidentIdx = players.indexOfFirst { it -> it.id == lastNonSpecialPresident }
+        val lastNonSpecialPresidentIdx = players.indexOf(lastNonSpecialPresident)
         val firstCandidateIdx = (lastNonSpecialPresidentIdx + 1) % players.size
         val candidates = players.subList(firstCandidateIdx, players.size) + players.subList(0, firstCandidateIdx)
-        return candidates.first { it.id !in state.deadPlayers }.id
+        return candidates.first { it !in state.deadPlayers }
     }
 
     private fun determineLastNonSpecialPresidentId(): UUID {
         if (state.rounds.size > 1) {
             val previousRound = state.rounds[state.rounds.size - 2]
             if (roundEndedWithSpecialElection(previousRound)) {
-                return (previousRound as NormalRound).presidentialCandidate.id
+                return (previousRound as NormalRound).presidentialCandidate
             }
         }
-        return state.currentRound.presidentialCandidate.id
+        return state.currentRound.presidentialCandidate
     }
 
     private fun roundEndedWithSpecialElection(round: Round): Boolean {
@@ -151,8 +151,8 @@ class Game(_players: List<User>) {
         return state.currentRound.chancellorPolicyTiles
     }
 
-    fun discardPolicyTile(user: User, policyToDiscard: PolicyTile) {
-        on(user.id, DiscardPolicyTile(policyToDiscard))
+    fun discardPolicyTile(user: UUID, policyToDiscard: PolicyTile) {
+        on(user, DiscardPolicyTile(policyToDiscard))
     }
 
     fun goToPhase(phase: GamePhase) {
