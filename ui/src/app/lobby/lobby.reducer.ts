@@ -1,5 +1,5 @@
 import {createReducer, on} from '@ngrx/store';
-import {goToRoom, identified, requestRoomSync, setUser, syncRoom, userAdded} from './lobby.actions';
+import {goToRoom, identified, requestRoomSync, setLastError, setUser, syncRoom, userAdded} from './lobby.actions';
 
 export interface RoomState {
   messages: any[],
@@ -7,7 +7,8 @@ export interface RoomState {
   roomId: string,
   room: Room,
   identified: boolean,
-  lastSyncRequest: Date
+  lastSyncRequest: Date,
+  lastError: ErrorResponse
 }
 
 export interface User {
@@ -21,7 +22,7 @@ export interface UserTO {
   dead: boolean
 }
 
-export interface Room {
+export interface RoomTO {
   users: User[],
   game: GameTO
 }
@@ -32,7 +33,8 @@ export interface GameTO {
   liberalPolicies: number,
   fascistPolicies: number,
   phase: string,
-  winner: string
+  winner: string,
+  fascistTiles: { executiveAction: ExecutivePower }[]
 }
 
 export interface RoundTO {
@@ -44,19 +46,8 @@ export interface RoundTO {
 function createRoom(): Room {
   return {
     users: [],
-    game: createGame()
+    game: null
   };
-}
-
-function createGame(): GameTO {
-  return {
-    players: [],
-    rounds: [],
-    liberalPolicies: 0,
-    fascistPolicies: 0,
-    phase: null,
-    winner: null,
-  }
 }
 
 const initialState: RoomState = {
@@ -68,8 +59,14 @@ const initialState: RoomState = {
   roomId: null,
   room: createRoom(),
   identified: false,
-  lastSyncRequest: null
+  lastSyncRequest: null,
+  lastError: null
 };
+
+export interface ErrorResponse {
+  code: string,
+  data: any
+}
 
 export const lobbyReducer = createReducer(
   initialState,
@@ -81,6 +78,60 @@ export const lobbyReducer = createReducer(
   on(goToRoom, (state, {roomId}) => ({...state, roomId: roomId, room: createRoom()})),
   on(identified, (state, a) => ({...state, identified: true})),
   on(requestRoomSync, (state) => ({...state, lastSyncRequest: new Date()})),
-  on(syncRoom, (state, room) => ({...state, room})),
-  on(userAdded, (state, user) => ({...state, room: { ...state.room, users: [...state.room.users, user ]}}))
+  on(syncRoom, (state, room) => ({...state, room: buildRoom(room)})),
+  on(userAdded, (state, user) => ({...state, room: {...state.room, users: [...state.room.users, user]}})),
+  on(setLastError, (state, errorResponse) => ({...state, lastError: errorResponse}))
 );
+
+export enum Vote {
+  YES = 'YES',
+  NO = 'NO'
+}
+
+export enum PolicyTile {
+  LIBERAL = 'LIBERAL',
+  FASCIST = 'FASCIST'
+}
+
+export enum ExecutivePower {
+  INVESTIGATE_LOYALTY = 'INVESTIGATE_LOYALTY',
+  CALL_SPECIAL_ELECTION = 'CALL_SPECIAL_ELECTION',
+  POLICY_PEEK = 'POLICY_PEEK',
+  EXECUTION = 'EXECUTION'
+}
+
+interface Room extends RoomTO {
+  game: Game
+}
+
+interface Game extends GameTO {
+  fascistLane: Lane,
+  liberalLane: void[]
+}
+
+interface Lane {
+  faction: PolicyTile,
+  tiles: { executivePower: ExecutivePower }[]
+}
+
+function buildRoom(room: RoomTO): Room {
+  if (!room.game) {
+    return <Room>room;
+  }
+
+  return ({
+    ...room,
+    game: buildGame(room.game)
+  })
+}
+
+function buildGame(game: GameTO): Game {
+  return ({
+    ...game,
+    fascistLane: {
+      faction: PolicyTile.FASCIST,
+      tiles: game.fascistTiles.map(it => ({executivePower: it.executiveAction}))
+    },
+    liberalLane: Array(game.liberalPolicies)
+  })
+}

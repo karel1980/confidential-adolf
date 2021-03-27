@@ -6,6 +6,7 @@ import de.confidential.domain.RoomRepository
 import de.confidential.domain.UserRepository
 import de.confidential.resources.ws.*
 import io.quarkus.runtime.StartupEvent
+import java.lang.reflect.InvocationTargetException
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.enterprise.event.Observes
@@ -77,7 +78,9 @@ class RoomEndpoint {
             comms.sendDirect(ErrorResponse(throwable::class.toString(), throwable.params), session)
         } else {
             if (session.userProperties["room"] == null) {
-                session.close(CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "Room not found"))
+                session.close(CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "RoomTO not found"))
+            } else {
+                comms.sendDirect(ErrorResponse(throwable::class.toString(), throwable.message), session)
             }
             println("onError >> $throwable")
             throwable.printStackTrace()
@@ -100,7 +103,11 @@ class RoomEndpoint {
 
         val maybeRoom = session.userProperties["room"] as Room?
         val room = maybeRoom as Room
-        handler::class.members.find { it.name == "handle" }!!.call(handler, session, room, msg)
+        try {
+            handler::class.members.find { it.name == "handle" }!!.call(handler, session, room, msg)
+        } catch (e: InvocationTargetException) {
+            throw if (e.cause == null) e else e.cause!!
+        }
 
         //TODO: also send event of what happened?
         //comms.sendToAllMembers(createRoomState(room, ), room.id)

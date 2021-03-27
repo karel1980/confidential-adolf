@@ -16,7 +16,7 @@ class GameState(val _players: List<UUID>) {
     val liberals: List<UUID>
     val fascists: List<UUID>
 
-    private val executivePowersPerFascistPolicy: Map<Int, ExecutivePower?> = when (_players.size) {
+    public val executivePowersPerFascistPolicy: Map<Int, ExecutivePower?> = when (_players.size) {
         5, 6 -> mapOf(
             Pair(2, ExecutivePower.POLICY_PEEK),
             Pair(3, ExecutivePower.EXECUTION),
@@ -64,8 +64,6 @@ class GameState(val _players: List<UUID>) {
             10 -> 6
             else -> throw IllegalArgumentException("Unexpected number of players")
         }
-
-        executivePowersPerFascistPolicy
 
         val randomized = players.shuffled()
         liberals = randomized.subList(0, liberalCount)

@@ -8,7 +8,10 @@ class NominatingChancellorGamePhaseHandler(val _game: Game) : GamePhaseHandler {
 
     val state = _game.state
 
-    override fun on(player: UUID, msg: IncomingMessage) {
+    override fun on(playerId: UUID, msg: IncomingMessage) {
+        if (playerId != state.currentRound.presidentialCandidate) {
+            throw IllegalArgumentException("only the president can nominate a chancellor")
+        }
         if (msg !is NominateChancellor) {
             throw IllegalArgumentException("only accepting nominatechancellor messages")
         }

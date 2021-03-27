@@ -14,17 +14,20 @@
   <ul *ngIf="room.game">
     <li *ngFor="let player of room.game.players">
       {{player.name}} -
-      <button *ngIf="room?.game?.phase == 'NOMINATING_CHANCELLOR'" (click)="onNominateChancellor(player.id)">NominateChancellor</button>
-      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER'" (click)="onInvestigateLoyalty(player.id)">InvestigateLoyalty</button>
-      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER'" (click)="onCallSpecialElection(player.id)">CallSpecialElection</button>
-      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER'" (click)="onExecution(player.id)">Execution</button>
+      <button *ngIf="room?.game?.phase == 'NOMINATING_CHANCELLOR' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onNominateChancellor(player.id)">NominateChancellor</button>
+      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onInvestigateLoyalty(player.id)">InvestigateLoyalty</button>
+      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onCallSpecialElection(player.id)">CallSpecialElection</button>
+      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onExecution(player.id)">Execution</button>
     </li>
   </ul>
 
-  <h3>Rounds</h3>
-  <div *ngFor="let round of room?.game?.rounds">
-    {{round|json}}
-  </div>
+  <h3>Game data</h3>
+  <div>{{room.game | json}}</div>
+
+  <ng-container *ngIf="lastError">
+    <h3>Error</h3>
+    <div>{{lastError.code}} / {{lastError?.data}}</div>
+  </ng-container>
 
   <h3>Actions</h3>
   <button (click)="onPingClicked()">Ping</button>

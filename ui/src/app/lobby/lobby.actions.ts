@@ -1,5 +1,5 @@
 import {createAction, props} from '@ngrx/store';
-import {Room} from "./lobby.reducer";
+import {ErrorResponse, RoomTO} from "./lobby.reducer";
 
 export const setUser = createAction(
   'setUser',
@@ -21,7 +21,12 @@ export const requestRoomSync = createAction(
 
 export const syncRoom = createAction(
   'syncRoom',
-  props<Room>()
+  props<RoomTO>()
+)
+
+export const setLastError = createAction(
+  'setLastError',
+  props<ErrorResponse>()
 )
 
 export const userAdded = createAction(

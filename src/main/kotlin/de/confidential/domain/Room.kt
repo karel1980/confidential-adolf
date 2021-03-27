@@ -45,12 +45,22 @@ class Room(val id: UUID) {
 
     private fun gameTO(game: Game, userId: UUID): GameTO {
         return GameTO(
-            game.players.map { PlayerTO(it, members.first { member -> member.id == it }.name,it in game.state.deadPlayers, if (it == userId) game.state.hitler == it else null) },
+            game.players.map {
+                PlayerTO(
+                    it,
+                    members.first { member -> member.id == it }.name,
+                    it in game.state.deadPlayers,
+                    if (it == userId) game.state.hitler == it else null
+                )
+            },
             game.state.rounds.map { roundTo(it, userId) },
             game.state.enactedLiberalPolicies,
             game.state.enactedFasistPolicies,
             game.phase(),
-            game.state.winningParty
+            game.state.winningParty,
+            List(Game.FASCIST_POLICIES_NEEDED_TO_WIN) {
+                PolicyLaneTileTO(game.state.executivePowersPerFascistPolicy[it])
+            }
         )
     }
 
@@ -66,6 +76,8 @@ class Room(val id: UUID) {
         round.roundNumber,
         round.presidentialCandidate,
         round.chancellor,
+        round.presidentPolicyTiles,
+        round.chancellorPolicyTiles,
         peekedTiles(round, userId),
         investigationResult(round, userId),
         round.executedPlayer
@@ -79,7 +91,8 @@ class Room(val id: UUID) {
         if (round.presidentialCandidate == userId && round.investigatedPlayerId != null) {
             InvestigationResult(
                 round.investigatedPlayerId!!,
-                if (round.investigatedPlayerId in game!!.state.liberals) PolicyTile.LIBERAL else PolicyTile.FASCIST)
+                if (round.investigatedPlayerId in game!!.state.liberals) PolicyTile.LIBERAL else PolicyTile.FASCIST
+            )
         } else {
             null
         }

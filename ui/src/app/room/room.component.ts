@@ -1,10 +1,10 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Engine, Message} from "../lobby/engine";
-import {Room, RoomState, User} from "../lobby/lobby.reducer";
+import {ErrorResponse, RoomTO, RoomState, User, Vote, PolicyTile} from "../lobby/lobby.reducer";
 import {WebsocketService} from "../lobby/websocket.service";
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {ActivatedRoute, Router} from "@angular/router";
-import {identified, setUser, syncRoom, userAdded} from "../lobby/lobby.actions";
+import {identified, setLastError, setUser, syncRoom, userAdded} from "../lobby/lobby.actions";
 import {RoomService} from "./room.service";
 
 interface IdentificationSuccess extends Message {
@@ -42,18 +42,16 @@ const PongHandler = {
 
 const RoomStateHandler = {
   type: "RoomState",
-  handle: (message: Room, store: Store) =>
+  handle: (message: RoomTO, store: Store) => {
+    console.log('AAA got room state', message);
     store.dispatch(syncRoom(message))
+  }
 }
 
-enum Vote {
-  YES = 'YES',
-  NO = 'NO'
-}
-
-enum PolicyTile {
-  LIBERAL = 'LIBERAL',
-  FASCIST = 'FASCIST'
+const ErrorResponseHandler = {
+  type: "ErrorResponse",
+  handle: (message: ErrorResponse, store: Store) =>
+    store.dispatch(setLastError(message))
 }
 
 @Component({
@@ -70,7 +68,8 @@ export class RoomComponent implements OnInit, OnDestroy {
   userName: string;
   roomId: string = null;
   engine: Engine;
-  room: Room;
+  room: RoomTO;
+  lastError: ErrorResponse;
 
   Vote = Vote;
   PolicyTile = PolicyTile;
@@ -81,7 +80,8 @@ export class RoomComponent implements OnInit, OnDestroy {
       IdentificationSuccessHandler,
       UserAddedHandler,
       PongHandler,
-      RoomStateHandler
+      RoomStateHandler,
+      ErrorResponseHandler
     ], store, ws);
   }
 
@@ -90,6 +90,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     const userSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.user);
     const roomSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.room);
     const identifiedSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.identified);
+    const errorSelector = createSelector(lobbySelector, (lobbyState: RoomState) => lobbyState.lastError);
 
     this.roomId = this.route.snapshot.params['roomId'];
 
@@ -117,7 +118,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     )
 
     this.store.select(roomSelector).subscribe(
-      (room: Room) => {
+      (room: RoomTO) => {
         this.room = room
       }
     )
@@ -126,6 +127,14 @@ export class RoomComponent implements OnInit, OnDestroy {
       (identified) => {
         if (identified) {
           this.engine.send({'_type': 'GetRoomState'});
+        }
+      }
+    )
+
+    this.store.select(errorSelector).subscribe(
+      (lastError) => {
+        if (lastError) {
+          this.lastError = lastError
         }
       }
     )

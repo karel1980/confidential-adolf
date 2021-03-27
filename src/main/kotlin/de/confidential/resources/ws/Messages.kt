@@ -2,10 +2,7 @@ package de.confidential.resources.ws
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import de.confidential.domain.GamePhase
-import de.confidential.domain.PolicyTile
-import de.confidential.domain.User
-import de.confidential.domain.Vote
+import de.confidential.domain.*
 import java.util.*
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
@@ -50,6 +47,7 @@ class Execution(val targetId: UUID) : IncomingMessage
 @JsonSubTypes(
     JsonSubTypes.Type(value = IdentifyRequest::class, name = "Identify"),
     JsonSubTypes.Type(value = IdentificationSuccess::class, name = "IdentificationSuccess"),
+    JsonSubTypes.Type(value = ErrorResponse::class, name = "ErrorResponse"),
     JsonSubTypes.Type(value = UserTalked::class, name = "UserTalked"),
     JsonSubTypes.Type(value = Pong::class, name = "Pong"),
     JsonSubTypes.Type(value = RoomState::class, name = "RoomState")
@@ -57,9 +55,7 @@ class Execution(val targetId: UUID) : IncomingMessage
 interface OutgoingMessageMixin
 interface OutgoingMessage
 
-class ErrorResponse(val code: String, val data: Any?) : OutgoingMessage {
-    val error = true
-}
+class ErrorResponse(val code: String, val data: Any?) : OutgoingMessage {}
 
 class IdentifyRequest : OutgoingMessage
 data class IdentificationSuccess(val id: UUID, val name: String) : OutgoingMessage
@@ -79,8 +75,11 @@ data class GameTO(
     val liberalPolicies: Int,
     val fascistPolicies: Int,
     val phase: GamePhase,
-    val winner: PolicyTile?
+    val winner: PolicyTile?,
+    val fascistTiles: List<PolicyLaneTileTO>
 )
+
+data class PolicyLaneTileTO(val executiveAction: ExecutivePower?)
 
 data class PlayerTO(
     val id: UUID,
@@ -99,6 +98,8 @@ data class NormalRoundTO(
     val roundNumber: Int,
     val president: UUID,
     val chancellor: UUID?,
+    val presidentPolicies: List<PolicyTile>?,
+    val chancellorPolicies: List<PolicyTile>?,
     val peekedTiles: List<PolicyTile>?,
     val investigationResult: InvestigationResult?,
     val executedPlayer: UUID?
