@@ -30,6 +30,7 @@ export interface RoomTO {
 export interface GameTO {
   players: UserTO[],
   rounds: RoundTO[],
+  failedElections: number,
   liberalPolicies: number,
   fascistPolicies: number,
   phase: string,
@@ -100,16 +101,17 @@ export enum ExecutivePower {
   EXECUTION = 'EXECUTION'
 }
 
-interface Room extends RoomTO {
+export interface Room extends RoomTO {
   game: Game
 }
 
-interface Game extends GameTO {
+export interface Game extends GameTO {
+  failedElections: number,
   fascistLane: Lane,
   liberalLane: void[]
 }
 
-interface Lane {
+export interface Lane {
   faction: PolicyTile,
   tiles: { executivePower: ExecutivePower }[]
 }

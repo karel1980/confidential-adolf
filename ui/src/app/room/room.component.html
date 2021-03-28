@@ -5,43 +5,95 @@
   <button class="btn btn-primary" (click)="onClickJoin()">Join</button>
 </div>
 <div *ngIf="connected">
-  <h3>Players</h3>
-  <h3>{{user.name}} / {{user.id}} -- {{room?.game?.phase}} -- round {{room?.game?.rounds[room?.game?.rounds?.length-1]?.roundNumber}}</h3>
-  <ul *ngIf="!room.game">
-    <li *ngFor="let user of room?.users">{{user|json}}
-    </li>
-  </ul>
-  <ul *ngIf="room.game">
-    <li *ngFor="let player of room.game.players">
-      {{player.name}} -
-      <button *ngIf="room?.game?.phase == 'NOMINATING_CHANCELLOR' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onNominateChancellor(player.id)">NominateChancellor</button>
-      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onInvestigateLoyalty(player.id)">InvestigateLoyalty</button>
-      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onCallSpecialElection(player.id)">CallSpecialElection</button>
-      <button  *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id" (click)="onExecution(player.id)">Execution</button>
-    </li>
-  </ul>
 
-  <h3>Game data</h3>
-  <div>{{room.game | json}}</div>
-
-  <ng-container *ngIf="lastError">
-    <h3>Error</h3>
-    <div>{{lastError.code}} / {{lastError?.data}}</div>
+  <ng-container *ngIf="!room.game">
+    <h3>Players</h3>
+    <h3>{{user.name}} / {{user.id}} -- {{room?.game?.phase}} -- round {{room?.game?.rounds[room?.game?.rounds?.length - 1]?.roundNumber}}</h3>
+    <ul *ngIf="!room.game">
+      <li *ngFor="let user of room?.users">{{user|json}}
+      </li>
+    </ul>
+    <button *ngIf="room?.game?.phase == null && room.users.length > 4" (click)="onStartGameClicked()">StartGame</button>
   </ng-container>
 
-  <h3>Actions</h3>
-  <button (click)="onPingClicked()">Ping</button>
-  <button (click)="onGetRoomStateClicked()">Get Room State</button>
-  <button *ngIf="room?.game?.phase == null && room.users.length > 4" (click)="onStartGameClicked()">StartGame</button>
-  <button *ngIf="room?.game?.phase == 'VOTING_LEADERSHIP'" (click)="onVoteLeadership(Vote.YES)">VoteLeadership YES</button>
-  <button *ngIf="room?.game?.phase == 'VOTING_LEADERSHIP'" (click)="onVoteLeadership(Vote.NO)">VoteLeadership NO</button>
-  <button *ngIf="room?.game?.phase == 'PRESIDENT_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onDiscardPolicyTile(PolicyTile.LIBERAL)">discard liberal policy</button>
-  <button *ngIf="room?.game?.phase == 'PRESIDENT_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onDiscardPolicyTile(PolicyTile.FASCIST)">discard fascist policy</button>
-  <button *ngIf="room?.game?.phase == 'CHANCELLOR_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].chancellor" (click)="onDiscardPolicyTile(PolicyTile.LIBERAL)">discard liberal policy</button>
-  <button *ngIf="room?.game?.phase == 'CHANCELLOR_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].chancellor" (click)="onDiscardPolicyTile(PolicyTile.FASCIST)">discard fascist policy</button>
-  <button *ngIf="room?.game?.phase == 'CHANCELLOR_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].chancellor" (click)="onRequestVeto()">RequestVeto</button>
-  <button *ngIf="room?.game?.phase == 'VETO_REQUESTED' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onConfirmVeto()">ConfirmVeto</button>
-  <button *ngIf="room?.game?.phase == 'VETO_REQUESTED' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onDenyVeto()">DenyVeto</button>
-  <button *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onPolicyPeek()">PolicyPeek</button>
+  <button class="btn btn-primary" (click)="onToggleDesign()">Toggle design</button>
+  <ng-container *ngIf="room.game && newDesign">
+    <app-game [game]="room.game"
+              (pingClicked)="onPingClicked()"
+              (getRoomStateClicked)="onGetRoomStateClicked()"
+              (startGameClicked)="onStartGameClicked()"
+              (voteLeadership)="onVoteLeadership($event)"
+              (discardPolicyTile)="onDiscardPolicyTile($event)"
+              (requestVeto)="onRequestVeto()"
+              (confirmVeto)="onConfirmVeto()"
+              (denyVeto)="onDenyVeto()"
+              (policyPeek)="onPolicyPeek()"
+              (nominateChancellor)="onNominateChancellor($event)"
+              (investigateLoyalty)="onInvestigateLoyalty($event)"
+              (callSpecialElection)="onCallSpecialElection($event)"
+              (execution)=onExecution($event)>
+    </app-game>
+  </ng-container>
 
+  <ng-container *ngIf="room.game && !newDesign">
+    <ul *ngIf="room.game">
+      <li *ngFor="let player of room.game.players">
+        {{player.name}} -
+        <button
+          *ngIf="room?.game?.phase == 'NOMINATING_CHANCELLOR' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id"
+          (click)="onNominateChancellor(player.id)">NominateChancellor
+        </button>
+        <button
+          *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id"
+          (click)="onInvestigateLoyalty(player.id)">InvestigateLoyalty
+        </button>
+        <button
+          *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id"
+          (click)="onCallSpecialElection(player.id)">CallSpecialElection
+        </button>
+        <button
+          *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id"
+          (click)="onExecution(player.id)">Execution
+        </button>
+      </li>
+    </ul>
+
+    <h3>Game data</h3>
+    <div>{{room.game | json}}</div>
+
+    <ng-container *ngIf="lastError">
+      <h3>Error</h3>
+      <div>{{lastError.code}} / {{lastError?.data}}</div>
+    </ng-container>
+
+    <h3>Actions</h3>
+    <button (click)="onPingClicked()">Ping</button>
+    <button (click)="onGetRoomStateClicked()">Get Room State</button>
+    <button *ngIf="room?.game?.phase == 'VOTING_LEADERSHIP'" (click)="onVoteLeadership(Vote.YES)">VoteLeadership YES</button>
+    <button *ngIf="room?.game?.phase == 'VOTING_LEADERSHIP'" (click)="onVoteLeadership(Vote.NO)">VoteLeadership NO</button>
+    <button *ngIf="room?.game?.phase == 'PRESIDENT_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president"
+            (click)="onDiscardPolicyTile(PolicyTile.LIBERAL)">discard liberal policy
+    </button>
+    <button *ngIf="room?.game?.phase == 'PRESIDENT_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president"
+            (click)="onDiscardPolicyTile(PolicyTile.FASCIST)">discard fascist policy
+    </button>
+    <button *ngIf="room?.game?.phase == 'CHANCELLOR_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].chancellor"
+            (click)="onDiscardPolicyTile(PolicyTile.LIBERAL)">discard liberal policy
+    </button>
+    <button *ngIf="room?.game?.phase == 'CHANCELLOR_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].chancellor"
+            (click)="onDiscardPolicyTile(PolicyTile.FASCIST)">discard fascist policy
+    </button>
+    <button *ngIf="room?.game?.phase == 'CHANCELLOR_DISCARDS_POLICY_TILE' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].chancellor"
+            (click)="onRequestVeto()">RequestVeto
+    </button>
+    <button *ngIf="room?.game?.phase == 'VETO_REQUESTED' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onConfirmVeto()">
+      ConfirmVeto
+    </button>
+    <button *ngIf="room?.game?.phase == 'VETO_REQUESTED' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president" (click)="onDenyVeto()">
+      DenyVeto
+    </button>
+    <button *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president"
+            (click)="onPolicyPeek()">PolicyPeek
+    </button>
+  </ng-container>
 </div>

@@ -72,6 +72,7 @@ data class RoomState(
 data class GameTO(
     val players: List<PlayerTO>,
     val rounds: List<RoundTO>,
+    val failedElections: Int,
     val liberalPolicies: Int,
     val fascistPolicies: Int,
     val phase: GamePhase,

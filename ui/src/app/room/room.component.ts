@@ -62,6 +62,7 @@ const ErrorResponseHandler = {
 export class RoomComponent implements OnInit, OnDestroy {
 
   messages: [];
+  newDesign = true;
 
   connected = false;
   user: User;
@@ -205,6 +206,10 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   onExecution(targetId: string) {
     this.engine.send({"_type": "Execution", targetId})
+  }
+
+  onToggleDesign() {
+    this.newDesign = !this.newDesign;
   }
 
   ngOnDestroy() {

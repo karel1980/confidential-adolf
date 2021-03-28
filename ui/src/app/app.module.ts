@@ -13,6 +13,12 @@ import {EffectsModule} from '@ngrx/effects';
 import {HttpClientModule} from "@angular/common/http";
 import {v4} from 'uuid';
 import {setUser} from "./lobby/lobby.actions";
+import { GameComponent } from './game/game.component';
+import { LiberalLaneComponent } from './liberal-lane/liberal-lane.component';
+import { ElectionTrackerComponent } from './election-tracker/election-tracker.component';
+import { LiberalPolicyComponent } from './liberal-policy/liberal-policy.component';
+import { FascistLaneComponent } from './fascist-lane/fascist-lane.component';
+import { FascistPolicyComponent } from './fascist-policy/fascist-policy.component';
 
 function createUserId(store: Store) {
   return () => {
@@ -32,7 +38,13 @@ function createUserId(store: Store) {
   declarations: [
     AppComponent,
     LobbyComponent,
-    RoomComponent
+    RoomComponent,
+    GameComponent,
+    LiberalLaneComponent,
+    ElectionTrackerComponent,
+    LiberalPolicyComponent,
+    FascistLaneComponent,
+    FascistPolicyComponent
   ],
   imports: [
     BrowserModule,
@@ -53,4 +65,4 @@ function createUserId(store: Store) {
 })
 export class
 AppModule {
-}
+};

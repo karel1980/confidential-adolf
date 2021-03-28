@@ -1,0 +1,12 @@
+<div class="election-tracker">
+  <div class="label">Election tracker</div>
+  <div class="dot dot-1">
+    <div class="circle" [ngClass]="{active: failedElections>0}">1</div>
+  </div>
+  <div class="dot dot-2">
+    <div class="circle" [ngClass]="{active: failedElections>1}">2</div>
+  </div>
+  <div class="dot dot-3">
+    <div class="circle" [ngClass]="{active: failedElections>2}">3</div>
+  </div>
+</div>

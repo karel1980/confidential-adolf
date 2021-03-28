@@ -17,5 +17,6 @@ class StartGameHandler(private val comms: Comms) : RoomMessageHandler<StartGame>
         if (room.members.size < 5) {
             throw IllegalStateException("Need at least 5 players to start game")
         }
+        room.startGame()
     }
 }

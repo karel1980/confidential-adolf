@@ -1,0 +1,23 @@
+.game {
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: 240px 120px 240px;
+}
+
+.liberal-section {
+  border-bottom: 1px solid black;
+  grid-row-start: 1;
+  background: #ccccff;
+}
+
+.central-section {
+  grid-row-start: 2;
+  background: #dddddd;
+}
+
+.fascist-section {
+  border-top: 1px solid black;
+  grid-row-start: 3;
+  background: saddlebrown;
+}

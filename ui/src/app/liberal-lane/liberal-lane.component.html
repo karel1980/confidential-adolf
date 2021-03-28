@@ -1,0 +1,11 @@
+<div class="container">
+  <div class="election-tracker">
+    <app-election-tracker [failedElections]="failedElections"></app-election-tracker>
+  </div>
+  <div class="tile tile-{{tile}}" *ngFor="let tile of tiles">
+    <div class="tile-inner" [ngClass]="{enabled: tile < enactedPolicies }">
+      <app-liberal-policy *ngIf="tile < enactedPolicies"></app-liberal-policy>
+    </div>
+  </div>
+  <div class="bottom"><h4>LIBERAL</h4></div>
+</div>

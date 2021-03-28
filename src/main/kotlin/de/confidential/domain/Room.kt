@@ -54,6 +54,7 @@ class Room(val id: UUID) {
                 )
             },
             game.state.rounds.map { roundTo(it, userId) },
+            game.state.electionTracker.failedElections,
             game.state.enactedLiberalPolicies,
             game.state.enactedFasistPolicies,
             game.phase(),
