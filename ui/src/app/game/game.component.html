@@ -2,7 +2,9 @@
   <div class="liberal-section">
     <app-liberal-lane [failedElections]="game.failedElections" [enactedPolicies]="game.liberalPolicies"></app-liberal-lane>
   </div>
-  <div class="central-section"></div>
+  <div class="central-section">
+    <app-player-lane [players]="game.fullPlayers"></app-player-lane>
+  </div>
   <div class="fascist-section">
     <app-fascist-lane [lane]="game.fascistLane" [enactedPolicies]="game.fascistPolicies"></app-fascist-lane>
   </div>

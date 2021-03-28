@@ -16,9 +16,10 @@ import {setUser} from "./lobby/lobby.actions";
 import { GameComponent } from './game/game.component';
 import { LiberalLaneComponent } from './liberal-lane/liberal-lane.component';
 import { ElectionTrackerComponent } from './election-tracker/election-tracker.component';
-import { LiberalPolicyComponent } from './liberal-policy/liberal-policy.component';
 import { FascistLaneComponent } from './fascist-lane/fascist-lane.component';
-import { FascistPolicyComponent } from './fascist-policy/fascist-policy.component';
+import { PolicyTileComponent } from './policy-tile/policy-tile.component';
+import { PlayerLaneComponent } from './player-lane/player-lane.component';
+import { PlayerTileComponent } from './player-tile/player-tile.component';
 
 function createUserId(store: Store) {
   return () => {
@@ -42,9 +43,10 @@ function createUserId(store: Store) {
     GameComponent,
     LiberalLaneComponent,
     ElectionTrackerComponent,
-    LiberalPolicyComponent,
     FascistLaneComponent,
-    FascistPolicyComponent
+    PolicyTileComponent,
+    PlayerLaneComponent,
+    PlayerTileComponent
   ],
   imports: [
     BrowserModule,
@@ -65,4 +67,4 @@ function createUserId(store: Store) {
 })
 export class
 AppModule {
-};
+}

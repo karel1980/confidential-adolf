@@ -35,6 +35,7 @@ export interface GameTO {
   fascistPolicies: number,
   phase: string,
   winner: string,
+  hitler: string,
   fascistTiles: { executiveAction: ExecutivePower }[]
 }
 
@@ -106,9 +107,18 @@ export interface Room extends RoomTO {
 }
 
 export interface Game extends GameTO {
+  fullPlayers: Player[],
   failedElections: number,
   fascistLane: Lane,
   liberalLane: void[]
+}
+
+export interface Player {
+  id: string,
+  name: string,
+  president: boolean,
+  chancellor: boolean,
+  hitler?: boolean
 }
 
 export interface Lane {
@@ -130,10 +140,21 @@ function buildRoom(room: RoomTO): Room {
 function buildGame(game: GameTO): Game {
   return ({
     ...game,
+    fullPlayers: buildFullPlayers(game),
     fascistLane: {
       faction: PolicyTile.FASCIST,
       tiles: game.fascistTiles.map(it => ({executivePower: it.executiveAction}))
     },
     liberalLane: Array(game.liberalPolicies)
   })
+}
+function buildFullPlayers(game: GameTO): Player[] {
+  return game.players.map(p => ({
+    id: p.id,
+    name: p.name,
+    dead: p.dead,
+    president: game.rounds[game.rounds.length - 1].president == p.id,
+    chancellor: game.rounds[game.rounds.length - 1].chancellor == p.id,
+    hitler: game.hitler == p.id
+  }));
 }
