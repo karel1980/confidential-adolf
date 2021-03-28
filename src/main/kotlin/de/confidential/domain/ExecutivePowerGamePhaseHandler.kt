@@ -57,8 +57,7 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
         state.deadPlayers.add(msg.targetId)
 
         if (state.hitler in state.deadPlayers) {
-            game.state.winningParty = PolicyTile.LIBERAL
-            game.goToPhase(GamePhase.GAME_OVER)
+            game.end(PolicyTile.LIBERAL)
         } else {
             game.startNextRound()
         }

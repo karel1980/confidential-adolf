@@ -37,8 +37,7 @@ class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandle
         }
 
         if (game.allPoliciesEnacted(enactedPolicy)) {
-            game.goToPhase(GamePhase.GAME_OVER)
-            state.winningParty = enactedPolicy
+            game.end(enactedPolicy)
             return
         }
 

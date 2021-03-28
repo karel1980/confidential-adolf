@@ -1,7 +1,7 @@
-- implement spectators
 - rebuild the policy deck from discarded policies if there are fewer than 3 cards left
 - show the elegible policies to the president and the chancellor when voting
 - check for win state if hitler becomes president
 - add plaques in UI (showing president, chancellor, faction & 'isHitler' state next to player name as pillsl)
 - instead of broadcasting the full game state after every move just update what's needed
-- plus a lot more ui improvements (hide/disable buttons that are not available)
+- a lot more ui improvements (hide/disable buttons that are not available)
+- implement spectators

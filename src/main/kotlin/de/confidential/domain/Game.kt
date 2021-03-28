@@ -58,6 +58,7 @@ class Game(_players: List<UUID>) {
 
     fun startNextRound() {
         if (state.electionTracker.failedElections == 3) {
+            restockPolicyTiles()
             playChaosRound()
             if (state.winningParty != null) {
                 startNextRoundWithRoundNumber(state.currentRound.roundNumber + 2)
@@ -70,16 +71,23 @@ class Game(_players: List<UUID>) {
     }
 
     private fun startNextRoundWithRoundNumber(roundNumber: Int, nextPresidentId: UUID = determineNextPresidentId()) {
-        //TODO: make sure state.policyTiles contains at least three cards.
-        // (if < 3 remain, add state.discardedPolicyTiles back to policy tiles and shuffle)
+        if (nextPresidentId in state.deadPlayers) {
+            throw IllegalStateException("Next round would start with a dead president. This should never ever happen, and your game is probably in a bad state.")
+        }
+        restockPolicyTiles()
 
         state.currentRound = NormalRound(
-            roundNumber, players,
-            //TODO: assert not dead?
-            nextPresidentId
+            roundNumber, players, nextPresidentId
         )
         state.rounds.add(state.currentRound)
         goToPhase(GamePhase.NOMINATING_CHANCELLOR)
+    }
+
+    private fun restockPolicyTiles() {
+        if (state.policyTiles.size < 3) {
+            state.policyTiles = (state.policyTiles + state.discardedPolicyTiles).shuffled().toMutableList()
+            state.discardedPolicyTiles = mutableListOf()
+        }
     }
 
     fun startSpecialElectionRound(nextPresidentId: UUID) {
@@ -119,7 +127,12 @@ class Game(_players: List<UUID>) {
 
         val policyTile = drawTopPolicyTile()
         placePolicyTile(policyTile)
-        checkGameIsDone()
+        if (facistLaneIsFull()) {
+            end(FASCIST)
+        }
+        if (liberalLaneIsFull()) {
+            end(LIBERAL)
+        }
     }
 
     private fun placePolicyTile(policyTile: PolicyTile) {
@@ -130,18 +143,8 @@ class Game(_players: List<UUID>) {
     }
 
     private fun drawTopPolicyTile() = state.policyTiles.removeAt(0)
-
-    private fun checkGameIsDone(): Boolean {
-        if (state.enactedFasistPolicies == FASCIST_POLICIES_NEEDED_TO_WIN) {
-            state.winningParty = FASCIST
-            return true
-        }
-        if (state.enactedLiberalPolicies == LIBERAL_POLICIES_NEEDED_TO_WIN) {
-            state.winningParty = LIBERAL
-            return true
-        }
-        return false
-    }
+    private fun facistLaneIsFull() = state.enactedFasistPolicies == FASCIST_POLICIES_NEEDED_TO_WIN
+    private fun liberalLaneIsFull() = state.enactedLiberalPolicies == LIBERAL_POLICIES_NEEDED_TO_WIN
 
     fun presidentPolicyTiles(): List<PolicyTile>? {
         return state.currentRound.presidentPolicyTiles
@@ -169,6 +172,11 @@ class Game(_players: List<UUID>) {
 
     fun previousRound(): Round {
         return state.rounds[state.rounds.size-2]
+    }
+
+    fun end(winner: PolicyTile) {
+        state.winningParty = winner
+        goToPhase(GamePhase.GAME_OVER)
     }
 
 }
