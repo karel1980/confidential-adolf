@@ -7,6 +7,7 @@
 - check game rules about who(m) is allowed what information about who(m) wrt factions
 - check game rules: is hitler always unknown to all others?
 
+- implement 'investigate loyalty' and 'call special election' in the frontend
 - bug: when hitler is killed, the 'execute player' window pops up again
 
 - [future]instead of broadcasting the full game state after every move just update what's needed
