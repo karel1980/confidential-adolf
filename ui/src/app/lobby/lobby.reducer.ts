@@ -87,7 +87,7 @@ export const lobbyReducer = createReducer(
     return ({...state, user});
   }),
   on(goToRoom, (state, {roomId}) => ({...state, roomId: roomId, room: createRoom()})),
-  on(identified, (state, user) => ({...state, user:user, identified: true})),
+  on(identified, (state, user) => ({...state, user: user, identified: true})),
   on(requestRoomSync, (state) => ({...state, lastSyncRequest: new Date()})),
   on(syncRoom, (state, room) => ({...state, room: buildRoom(room, state.user != null ? state.user.id : null)})),
   on(userAdded, (state, user) => ({...state, room: {...state.room, users: [...state.room.users, user]}})),
@@ -123,9 +123,7 @@ export interface Game extends GameTO {
   currentRound: RoundTO,
   askNominateChancellor: boolean,
   askVoteLeadership: boolean,
-  playerVoted: boolean,
-  askDiscardPolicy: boolean,
-  policiesToDiscard: PolicyTile[]
+  playerVoted: boolean
 }
 
 export interface Player {
@@ -154,24 +152,18 @@ function buildRoom(room: RoomTO, userId: string): Room {
 }
 
 export enum GamePhase {
+  NOT_STARTED_YET = 'NOT_STARTED_YET',
   NOMINATING_CHANCELLOR = 'NOMINATING_CHANCELLOR',
   VOTING_LEADERSHIP = 'VOTING_LEADERSHIP',
   PRESIDENT_DISCARDS_POLICY_TILE = 'PRESIDENT_DISCARDS_POLICY_TILE',
-  CHANCELLOR_DISCARDS_POLICY_TILE = 'CHANCELLOR_DISCARDS_POLICY_TILE'
+  CHANCELLOR_DISCARDS_POLICY_TILE = 'CHANCELLOR_DISCARDS_POLICY_TILE',
+  VETO_REQUESTED = 'VETO_REQUESTED',
+  PRESIDENT_EXECUTIVE_POWER = 'PRESIDENT_EXECUTIVE_POWER',
+  GAME_OVER = 'GAME_OVER'
 }
 
 function buildGame(game: GameTO, userId: string): Game {
-  let currentRound = game.rounds[game.rounds.length-1];
-  let presidentDiscarding = game.phase == GamePhase.PRESIDENT_DISCARDS_POLICY_TILE && currentRound.president == userId;
-  let chancellorDiscarding = game.phase == GamePhase.CHANCELLOR_DISCARDS_POLICY_TILE && currentRound.chancellor == userId;
-
-  let policiesToDiscard = [];
-  if (presidentDiscarding) {
-    policiesToDiscard = currentRound.presidentPolicies;
-  }
-  if (chancellorDiscarding) {
-    policiesToDiscard = currentRound.chancellorPolicies;
-  }
+  let currentRound = game.rounds[game.rounds.length - 1];
 
   return ({
     ...game,
@@ -183,12 +175,11 @@ function buildGame(game: GameTO, userId: string): Game {
     liberalLane: Array(game.liberalPolicies),
     currentRound: currentRound,
     playerVoted: currentRound.playerVoted,
-    askNominateChancellor: game.phase == GamePhase.NOMINATING_CHANCELLOR && currentRound.president== userId,
-    askVoteLeadership: game.phase == GamePhase.VOTING_LEADERSHIP,
-    askDiscardPolicy: presidentDiscarding || chancellorDiscarding,
-    policiesToDiscard: policiesToDiscard
+    askNominateChancellor: game.phase == GamePhase.NOMINATING_CHANCELLOR && currentRound.president == userId,
+    askVoteLeadership: game.phase == GamePhase.VOTING_LEADERSHIP
   })
 }
+
 function buildFullPlayers(game: GameTO): Player[] {
   return game.players.map(p => ({
     id: p.id,

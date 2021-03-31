@@ -6,7 +6,7 @@
 
   <ng-container *ngIf="!room.game">
     <h3>Players</h3>
-    <h3>{{user.name}} / {{user.id}} -- {{room?.game?.phase}} -- round {{room?.game?.rounds[room?.game?.rounds?.length - 1]?.roundNumber}}</h3>
+    <h3>{{user.name}} / {{user.id}} -- {{room?.game?.phase}} -- round {{room?.game?.currentRound?.roundNumber + 1}}</h3>
     <ul *ngIf="!room.game">
       <li *ngFor="let user of room?.users">{{user|json}}
       </li>
@@ -14,15 +14,18 @@
     <button *ngIf="room?.game?.phase == null && room.users.length > 4" (click)="onStartGameClicked()">StartGame</button>
   </ng-container>
 
-  <button class="btn btn-primary" (click)="onToggleDesign()">Toggle design</button>
-  <h2>{{user.name}} -- {{room?.game?.phase}} -- {{room?.game?.currentRound?.playerVoted}}</h2>
-  <div>XXX {{room?.game?.hitler}} -- {{room?.game?.fullPlayers|json}}</div>
+<!--  <button class="btn btn-primary" (click)="onToggleDesign()">Toggle design</button>-->
+  <button class="btn btn-primary" *ngIf="room?.game?.phase == GamePhase.GAME_OVER" (click)="onRestartGame()">Restart</button>
+  <h3>{{user.name}} -- {{room?.game?.phase}} -- round {{room?.game?.currentRound?.roundNumber + 1}}</h3>
+<!--  <div>XXX {{room?.game?.hitler}} &#45;&#45; {{room?.game?.fullPlayers|json}}</div>-->
 
   <app-nominate-chancellor #nominateChancellor [players]="room?.game?.fullPlayers" [game]="room?.game"
                            (nominate)="onNominate($event)"></app-nominate-chancellor>
   <app-vote-leadership #voteLeadership [players]="room?.game?.fullPlayers"
                        [currentRound]="room?.game?.currentRound" (vote)="onVoteLeadership($event)"></app-vote-leadership>
-  <app-discard-policy-tile #discardPolicyTile [policyTiles]="room?.game?.policiesToDiscard"
+  <app-discard-policy-tile #presidentDiscard [policyTiles]="room?.game?.currentRound?.presidentPolicies"
+                           (discard)="onDiscardPolicyTile($event)"></app-discard-policy-tile>
+  <app-discard-policy-tile #chancellorDiscard [policyTiles]="room?.game?.currentRound?.chancellorPolicies"
                            (discard)="onDiscardPolicyTile($event)"></app-discard-policy-tile>
   <app-policy-peek #policyPeek
                    [policies]="room?.game?.currentRound?.peekedTiles"

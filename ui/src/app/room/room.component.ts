@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Engine, Message} from "../lobby/engine";
-import {ErrorResponse, ExecutivePower, Player, PolicyTile, Room, RoomState, RoomTO, User, Vote} from "../lobby/lobby.reducer";
+import {ErrorResponse, ExecutivePower, GamePhase, Player, PolicyTile, Room, RoomState, RoomTO, User, Vote} from "../lobby/lobby.reducer";
 import {WebsocketService} from "../lobby/websocket.service";
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -76,10 +76,12 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   Vote = Vote;
   PolicyTile = PolicyTile;
+  GamePhase = GamePhase;
 
   @ViewChild('nominateChancellor') nominateChancellor: NominateChancellorComponent;
   @ViewChild('voteLeadership') voteLeadership: VoteLeadershipComponent;
-  @ViewChild('discardPolicyTile') discardPolicyTile: DiscardPolicyTileComponent;
+  @ViewChild('presidentDiscard') presidentDiscard: DiscardPolicyTileComponent;
+  @ViewChild('chancellorDiscard') chancellorDiscard: DiscardPolicyTileComponent;
   @ViewChild('policyPeek') policyPeek: PolicyPeekComponent;
   @ViewChild('investigateLoyalty') investigateLoyalty: InvestigateLoyaltyComponent;
   @ViewChild('executePlayer') executePlayer: ExecutePlayerComponent;
@@ -139,8 +141,11 @@ export class RoomComponent implements OnInit, OnDestroy {
         if (this.room.game.askVoteLeadership && !this.room.game.playerVoted) {
           this.voteLeadership.open();
         }
-        if (this.room.game.askDiscardPolicy) {
-          this.discardPolicyTile.open();
+        if (this.room.game.phase == GamePhase.PRESIDENT_DISCARDS_POLICY_TILE && this.user.id == this.room.game.currentRound.president) {
+          this.presidentDiscard.open();
+        }
+        if (this.room.game.phase == GamePhase.CHANCELLOR_DISCARDS_POLICY_TILE && this.user.id == this.room.game.currentRound.chancellor) {
+          this.chancellorDiscard.open();
         }
         if (this.room.game && this.room.game.currentRound.executivePower == ExecutivePower.POLICY_PEEK
             && this.user.id == this.room.game.currentRound.president) {
@@ -151,11 +156,10 @@ export class RoomComponent implements OnInit, OnDestroy {
           this.investigateLoyalty.open()
         }
         if (this.room.game && this.room.game.currentRound.executivePower == ExecutivePower.EXECUTION
-            && this.user.id == this.room.game.currentRound.president) {
+            && this.user.id == this.room.game.currentRound.president
+            && this.room.game.phase == GamePhase.PRESIDENT_EXECUTIVE_POWER) {
           this.executePlayer.open()
         }
-
-
       }
     )
 

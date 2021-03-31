@@ -1,5 +1,6 @@
 - implement spectators
 
+- style policy peek modal
 - prevent nominating dead chancellor (backend doesn't prevent this)
 - when game is over, show hitler to everyone
 - when game is over, show player factions to everyone

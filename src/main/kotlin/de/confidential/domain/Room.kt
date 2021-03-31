@@ -50,7 +50,7 @@ class Room(val id: UUID) {
                     it,
                     members.first { member -> member.id == it }.name,
                     it in game.state.deadPlayers,
-                    if (it == userId) {
+                    if (it == userId || game.phase() == GamePhase.GAME_OVER) {
                         val hitler = game.state.hitler.equals(it)
                         println("$it hitler? $hitler")
                         hitler
