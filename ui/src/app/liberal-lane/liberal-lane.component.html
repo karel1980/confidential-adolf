@@ -4,7 +4,8 @@
   </div>
   <div class="tile tile-{{tile}}" *ngFor="let tile of tiles">
     <div class="tile-inner" [ngClass]="{enabled: tile < enactedPolicies }">
-      <app-policy-tile [faction]="liberal" [type]="tile < 4 ? null : 'peace_dove'"></app-policy-tile>
+      <app-policy-tile [faction]="PolicyTile.LIBERAL" [type]="tile < 4 ? null : 'peace_dove'"
+        [enacted]="tile < enactedPolicies"></app-policy-tile>
     </div>
   </div>
   <div class="bottom"><h4>LIBERAL</h4></div>

@@ -1,0 +1,8 @@
+<ng-template #content>
+  <div>
+    <h2>{{question}}</h2>
+    <app-player-lane [players]="players"
+                     [clickable]="true"
+                     (playerClick)="onPlayerClick($event)"></app-player-lane>
+  </div>
+</ng-template>

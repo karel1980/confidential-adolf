@@ -77,8 +77,9 @@ class Room(val id: UUID) {
         round.roundNumber,
         round.presidentialCandidate,
         round.chancellor,
-        round.presidentPolicyTiles,
-        round.chancellorPolicyTiles,
+        userId in round.leadershipVotingRound.votes.keys,
+        if (userId == round.presidentialCandidate) { round.presidentPolicyTiles } else { emptyList()},
+        if (userId == round.chancellor) { round.chancellorPolicyTiles } else { emptyList()},
         peekedTiles(round, userId),
         investigationResult(round, userId),
         round.executedPlayer

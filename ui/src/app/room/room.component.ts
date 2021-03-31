@@ -1,11 +1,14 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Engine, Message} from "../lobby/engine";
-import {ErrorResponse, RoomTO, RoomState, User, Vote, PolicyTile} from "../lobby/lobby.reducer";
+import {ErrorResponse, Player, PolicyTile, Room, RoomState, RoomTO, User, Vote} from "../lobby/lobby.reducer";
 import {WebsocketService} from "../lobby/websocket.service";
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {ActivatedRoute, Router} from "@angular/router";
 import {identified, setLastError, setUser, syncRoom, userAdded} from "../lobby/lobby.actions";
 import {RoomService} from "./room.service";
+import {VoteLeadershipComponent} from "../vote-leadership/vote-leadership.component";
+import {NominateChancellorComponent} from "../nominate-chancellor/nominate-chancellor.component";
+import {DiscardPolicyTileComponent} from '../discard-policy-tile/discard-policy-tile.component';
 
 interface IdentificationSuccess extends Message {
   id: string,
@@ -13,10 +16,7 @@ interface IdentificationSuccess extends Message {
 }
 
 interface UserAdded extends Message {
-  user: {
-    id: string,
-    name: string
-  }
+  user: User
 }
 
 interface Pong {
@@ -43,7 +43,6 @@ const PongHandler = {
 const RoomStateHandler = {
   type: "RoomState",
   handle: (message: RoomTO, store: Store) => {
-    console.log('AAA got room state', message);
     store.dispatch(syncRoom(message))
   }
 }
@@ -69,11 +68,15 @@ export class RoomComponent implements OnInit, OnDestroy {
   userName: string;
   roomId: string = null;
   engine: Engine;
-  room: RoomTO;
+  room: Room;
   lastError: ErrorResponse;
 
   Vote = Vote;
   PolicyTile = PolicyTile;
+
+  @ViewChild('nominateChancellor') nominateChancellor: NominateChancellorComponent;
+  @ViewChild('voteLeadership') voteLeadership: VoteLeadershipComponent;
+  @ViewChild('discardPolicyTile') discardPolicyTile: DiscardPolicyTileComponent;
 
   constructor(private ws: WebsocketService, private store: Store, private router: Router,
               private route: ActivatedRoute, private roomService: RoomService) {
@@ -119,8 +122,20 @@ export class RoomComponent implements OnInit, OnDestroy {
     )
 
     this.store.select(roomSelector).subscribe(
-      (room: RoomTO) => {
-        this.room = room
+      (room: Room) => {
+        this.room = room;
+        if (!this.room || !this.room.game) {
+          return;
+        }
+        if (this.room.game.askNominateChancellor) {
+          this.nominateChancellor.open();
+        }
+        if (this.room.game.askVoteLeadership && !this.room.game.playerVoted) {
+          this.voteLeadership.open();
+        }
+        if (this.room.game.askDiscardPolicy) {
+          this.discardPolicyTile.open();
+        }
       }
     )
 
@@ -216,4 +231,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.engine.stop();
   }
 
+  onNominate(player: Player) {
+    this.onNominateChancellor(player.id);
+  }
 }

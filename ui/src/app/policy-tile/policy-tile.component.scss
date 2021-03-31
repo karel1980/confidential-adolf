@@ -5,14 +5,13 @@
   display: grid;
   grid-template-rows: 1fr auto 1fr;
 }
-.tile.liberal{
-  background: #aaf;
+.tile-LIBERAL.enacted {
+  border: 10px solid blue;
 }
-.tile.fascist{
-  background: sandybrown;
-}
+.tile-FASCIST.enacted {
+  border: 10px solid saddlebrown;
 
+}
 .center{
   grid-row-start: 2;
 }
-

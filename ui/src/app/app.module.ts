@@ -13,13 +13,18 @@ import {EffectsModule} from '@ngrx/effects';
 import {HttpClientModule} from "@angular/common/http";
 import {v4} from 'uuid';
 import {setUser} from "./lobby/lobby.actions";
-import { GameComponent } from './game/game.component';
-import { LiberalLaneComponent } from './liberal-lane/liberal-lane.component';
-import { ElectionTrackerComponent } from './election-tracker/election-tracker.component';
-import { FascistLaneComponent } from './fascist-lane/fascist-lane.component';
-import { PolicyTileComponent } from './policy-tile/policy-tile.component';
-import { PlayerLaneComponent } from './player-lane/player-lane.component';
-import { PlayerTileComponent } from './player-tile/player-tile.component';
+import {GameComponent} from './game/game.component';
+import {LiberalLaneComponent} from './liberal-lane/liberal-lane.component';
+import {ElectionTrackerComponent} from './election-tracker/election-tracker.component';
+import {FascistLaneComponent} from './fascist-lane/fascist-lane.component';
+import {PolicyTileComponent} from './policy-tile/policy-tile.component';
+import {PlayerLaneComponent} from './player-lane/player-lane.component';
+import {PlayerTileComponent} from './player-tile/player-tile.component';
+import {NgbModalModule, NgbModule} from '@ng-bootstrap/ng-bootstrap';
+import {NominateChancellorComponent} from './nominate-chancellor/nominate-chancellor.component';
+import {PlayerPickerComponent} from './player-picker/player-picker.component';
+import { VoteLeadershipComponent } from './vote-leadership/vote-leadership.component';
+import { DiscardPolicyTileComponent } from './discard-policy-tile/discard-policy-tile.component';
 
 function createUserId(store: Store) {
   return () => {
@@ -46,7 +51,11 @@ function createUserId(store: Store) {
     FascistLaneComponent,
     PolicyTileComponent,
     PlayerLaneComponent,
-    PlayerTileComponent
+    PlayerTileComponent,
+    NominateChancellorComponent,
+    PlayerPickerComponent,
+    VoteLeadershipComponent,
+    DiscardPolicyTileComponent
   ],
   imports: [
     BrowserModule,
@@ -55,7 +64,9 @@ function createUserId(store: Store) {
     FormsModule,
     ReactiveFormsModule,
     StoreModule.forRoot({lobby: lobbyReducer}),
-    EffectsModule.forRoot()
+    EffectsModule.forRoot(),
+    NgbModule,
+    NgbModalModule
   ],
   providers: [{
     provide: APP_INITIALIZER,
@@ -65,6 +76,5 @@ function createUserId(store: Store) {
   }],
   bootstrap: [AppComponent]
 })
-export class
-AppModule {
+export class AppModule {
 }

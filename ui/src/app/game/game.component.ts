@@ -1,5 +1,6 @@
-import {Component, OnInit, Output, EventEmitter, Input} from '@angular/core';
-import {Game, GameTO, PolicyTile, Vote} from "../lobby/lobby.reducer";
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Game, PolicyTile, Vote} from "../lobby/lobby.reducer";
+
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
@@ -22,8 +23,6 @@ export class GameComponent implements OnInit {
   @Output() execution = new EventEmitter<string>();
 
   @Input() game: Game;
-
-  constructor() { }
 
   ngOnInit(): void {
   }

@@ -1,4 +1,5 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {PolicyTile} from '../lobby/lobby.reducer';
 
 @Component({
   selector: 'app-policy-tile',
@@ -7,8 +8,9 @@ import {Component, Input, OnInit} from '@angular/core';
 })
 export class PolicyTileComponent implements OnInit {
 
-  @Input() faction: string;
+  @Input() faction: PolicyTile;
   @Input() type: string;
+  @Input() enacted: boolean;
 
   constructor() { }
 

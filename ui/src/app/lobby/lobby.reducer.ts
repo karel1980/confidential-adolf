@@ -42,7 +42,10 @@ export interface GameTO {
 export interface RoundTO {
   roundNumber: string,
   president: string,
-  chancellor: string
+  chancellor: string,
+  presidentPolicies: PolicyTile[],
+  chancellorPolicies: PolicyTile[],
+  playerVoted: boolean
 }
 
 function createRoom(): Room {
@@ -73,14 +76,13 @@ export interface ErrorResponse {
 export const lobbyReducer = createReducer(
   initialState,
   on(setUser, (state, user) => {
-    console.log('setting this in local storage', user);
     localStorage.setItem('user', JSON.stringify(user));
     return ({...state, user});
   }),
   on(goToRoom, (state, {roomId}) => ({...state, roomId: roomId, room: createRoom()})),
-  on(identified, (state, a) => ({...state, identified: true})),
+  on(identified, (state, user) => ({...state, user:user, identified: true})),
   on(requestRoomSync, (state) => ({...state, lastSyncRequest: new Date()})),
-  on(syncRoom, (state, room) => ({...state, room: buildRoom(room)})),
+  on(syncRoom, (state, room) => ({...state, room: buildRoom(room, state.user != null ? state.user.id : null)})),
   on(userAdded, (state, user) => ({...state, room: {...state.room, users: [...state.room.users, user]}})),
   on(setLastError, (state, errorResponse) => ({...state, lastError: errorResponse}))
 );
@@ -110,7 +112,13 @@ export interface Game extends GameTO {
   fullPlayers: Player[],
   failedElections: number,
   fascistLane: Lane,
-  liberalLane: void[]
+  liberalLane: void[],
+  currentRound: RoundTO,
+  askNominateChancellor: boolean,
+  askVoteLeadership: boolean,
+  playerVoted: boolean,
+  askDiscardPolicy: boolean,
+  policiesToDiscard: PolicyTile[]
 }
 
 export interface Player {
@@ -126,18 +134,37 @@ export interface Lane {
   tiles: { executivePower: ExecutivePower }[]
 }
 
-function buildRoom(room: RoomTO): Room {
+function buildRoom(room: RoomTO, userId: string): Room {
   if (!room.game) {
     return <Room>room;
   }
 
   return ({
     ...room,
-    game: buildGame(room.game)
+    game: buildGame(room.game, userId)
   })
 }
 
-function buildGame(game: GameTO): Game {
+export enum GamePhase {
+  NOMINATING_CHANCELLOR = 'NOMINATING_CHANCELLOR',
+  VOTING_LEADERSHIP = 'VOTING_LEADERSHIP',
+  PRESIDENT_DISCARDS_POLICY_TILE = 'PRESIDENT_DISCARDS_POLICY_TILE',
+  CHANCELLOR_DISCARDS_POLICY_TILE = 'CHANCELLOR_DISCARDS_POLICY_TILE'
+}
+
+function buildGame(game: GameTO, userId: string): Game {
+  let currentRound = game.rounds[game.rounds.length-1];
+  let presidentDiscarding = game.phase == GamePhase.PRESIDENT_DISCARDS_POLICY_TILE && currentRound.president == userId;
+  let chancellorDiscarding = game.phase == GamePhase.CHANCELLOR_DISCARDS_POLICY_TILE && currentRound.chancellor == userId;
+
+  let policiesToDiscard = [];
+  if (presidentDiscarding) {
+    policiesToDiscard = currentRound.presidentPolicies;
+  }
+  if (chancellorDiscarding) {
+    policiesToDiscard = currentRound.chancellorPolicies;
+  }
+
   return ({
     ...game,
     fullPlayers: buildFullPlayers(game),
@@ -145,7 +172,13 @@ function buildGame(game: GameTO): Game {
       faction: PolicyTile.FASCIST,
       tiles: game.fascistTiles.map(it => ({executivePower: it.executiveAction}))
     },
-    liberalLane: Array(game.liberalPolicies)
+    liberalLane: Array(game.liberalPolicies),
+    currentRound: currentRound,
+    playerVoted: currentRound.playerVoted,
+    askNominateChancellor: game.phase == GamePhase.NOMINATING_CHANCELLOR && currentRound.president== userId,
+    askVoteLeadership: game.phase == GamePhase.VOTING_LEADERSHIP,
+    askDiscardPolicy: presidentDiscarding || chancellorDiscarding,
+    policiesToDiscard: policiesToDiscard
   })
 }
 function buildFullPlayers(game: GameTO): Player[] {

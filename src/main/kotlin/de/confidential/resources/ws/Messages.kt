@@ -99,6 +99,7 @@ data class NormalRoundTO(
     val roundNumber: Int,
     val president: UUID,
     val chancellor: UUID?,
+    val playerVoted: Boolean,
     val presidentPolicies: List<PolicyTile>?,
     val chancellorPolicies: List<PolicyTile>?,
     val peekedTiles: List<PolicyTile>?,
