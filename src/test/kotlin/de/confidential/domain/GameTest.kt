@@ -192,6 +192,7 @@ internal class GameTest {
 
         assertThat(game.state.currentRound.roundNumber)
             .isEqualTo(2)
+        assertThat(game.phase() == GamePhase.NOMINATING_CHANCELLOR)
     }
 
     @Test

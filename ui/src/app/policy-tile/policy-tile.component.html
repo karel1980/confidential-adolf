@@ -1,4 +1,5 @@
-<div class="tile tile-{{faction}}" [ngClass]="{enacted: enacted}">
+<div class="tile tile-{{faction}}" [ngClass]="{enacted: enacted, clickable: clickable}"
+  (click)="tileClick.emit(faction)">
   <div *ngIf="enacted">{{faction}}</div>
   <div class="center">
     <img *ngIf="type" src="/assets/images/{{type}}.svg" alt="{{type}}" [style]="{opacity: '50%', height: '80px'}">

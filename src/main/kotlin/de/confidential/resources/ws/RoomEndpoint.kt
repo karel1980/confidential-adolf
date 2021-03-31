@@ -1,6 +1,5 @@
 package de.confidential.resources
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
 import de.confidential.domain.Room
 import de.confidential.domain.RoomRepository
 import de.confidential.domain.UserRepository
@@ -41,21 +40,21 @@ class RoomEndpoint {
 
     fun onStart(@Observes ev: StartupEvent?) {
         val handlers = listOf(
-            IdentifyHandler(comms, userRepository),
-            PingHandler(comms),
-            GetRoomStateHandler(comms),
-            StartGameHandler(comms),
-            GenericRoomMessageHandler(NominateChancellor::class.java),
-            GenericRoomMessageHandler(LeadershipVote::class.java),
-            GenericRoomMessageHandler(DiscardPolicyTile::class.java),
-            GenericRoomMessageHandler(RequestVeto::class.java),
-            GenericRoomMessageHandler(ConfirmVeto::class.java),
-            GenericRoomMessageHandler(DenyVeto::class.java),
-            GenericRoomMessageHandler(InvestigateLoyalty::class.java),
-            GenericRoomMessageHandler(CallSpecialElection::class.java),
-            GenericRoomMessageHandler(PolicyPeek::class.java),
-            GenericRoomMessageHandler(Execution::class.java)
-
+                IdentifyHandler(comms, userRepository),
+                PingHandler(comms),
+                GetRoomStateHandler(comms),
+                StartGameHandler(comms),
+                GenericGameMessageHandler(NominateChancellor::class.java),
+                GenericGameMessageHandler(LeadershipVote::class.java),
+                GenericGameMessageHandler(DiscardPolicyTile::class.java),
+                GenericGameMessageHandler(RequestVeto::class.java),
+                GenericGameMessageHandler(ConfirmVeto::class.java),
+                GenericGameMessageHandler(DenyVeto::class.java),
+                GenericGameMessageHandler(InvestigateLoyalty::class.java),
+                GenericGameMessageHandler(CallSpecialElection::class.java),
+                GenericGameMessageHandler(PolicyPeek::class.java),
+                GenericGameMessageHandler(Execution::class.java),
+                RestartGameHandler()
         )
         roomHandlerMap = handlers.map { h -> h.canHandle() to h }.toMap()
     }
@@ -78,7 +77,7 @@ class RoomEndpoint {
             comms.sendDirect(ErrorResponse(throwable::class.toString(), throwable.params), session)
         } else {
             if (session.userProperties["room"] == null) {
-                session.close(CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "RoomTO not found"))
+                session.close(CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "Room not found"))
             } else {
                 comms.sendDirect(ErrorResponse(throwable::class.toString(), throwable.message), session)
             }
@@ -101,20 +100,26 @@ class RoomEndpoint {
             return
         }
 
-        val maybeRoom = session.userProperties["room"] as Room?
-        val room = maybeRoom as Room
-        try {
-            handler::class.members.find { it.name == "handle" }!!.call(handler, session, room, msg)
-        } catch (e: InvocationTargetException) {
-            throw if (e.cause == null) e else e.cause!!
-        }
+        val room = session.userProperties["room"] as Room
+        synchronized(room) {
+            try {
+                handler::class.members.find { it.name == "handle" }!!.call(handler, session, room, msg)
+            } catch (e: InvocationTargetException) {
+                println("There was an error - won't send new state to room members")
+                throw if (e.cause == null) e else e.cause!!
+            }
 
-        //TODO: also send event of what happened?
-        //comms.sendToAllMembers(createRoomState(room, ), room.id)
-        //Send user-specific state to each ember
-        comms.sessionsByRoomId[room.id]
-            ?.filter { SessionUtil.isIdentified(session) }
-            ?.forEach { comms.sendDirect(createRoomState(room, SessionUtil.getUserId(it)), it) }
+            //TODO: also send event of what happened?
+            println("handled $type - $msg")
+            println("Sending room state to every member")
+            comms.sessionsByRoomId[room.id]
+                    ?.filter { SessionUtil.isIdentified(session) }
+                    ?.forEach {
+                        val userId = SessionUtil.getUserId(it)
+                        println("Sending room state to $userId")
+                        comms.sendDirect(createRoomState(room, userId), it)
+                    }
+        }
     }
 
     private fun createRoomState(room: Room, user: UUID): OutgoingMessage {

@@ -17,8 +17,9 @@
   <button class="btn btn-primary" (click)="onToggleDesign()">Toggle design</button>
   <h2>{{user.name}} -- {{room?.game?.phase}} -- {{room?.game?.currentRound?.playerVoted}}</h2>
 
-  <app-nominate-chancellor #nominateChancellor [players]="room?.game?.fullPlayers" (nominate)="onNominate($event)"></app-nominate-chancellor>
-  <app-vote-leadership #voteLeadership [players]="room?.game?.fullPlayers" (vote)="onVoteLeadership($event)"></app-vote-leadership>
+  <app-nominate-chancellor #nominateChancellor [players]="room?.game?.fullPlayers" [game]="room?.game" (nominate)="onNominate($event)"></app-nominate-chancellor>
+  <app-vote-leadership #voteLeadership [players]="room?.game?.fullPlayers"
+                       [currentRound]="room?.game?.currentRound" (vote)="onVoteLeadership($event)"></app-vote-leadership>
   <app-discard-policy-tile #discardPolicyTile [policyTiles]="room?.game?.policiesToDiscard"
                            (discard)="onDiscardPolicyTile($event)"></app-discard-policy-tile>
 
@@ -65,6 +66,9 @@
 
     <h3>Game data</h3>
     <div>{{room.game | json}}</div>
+    <div *ngFor="let round of room?.game?.rounds" [style]="{border: '1px solid black'}">
+      {{round|json}}
+    </div>
 
     <ng-container *ngIf="lastError">
       <h3>Error</h3>
@@ -100,5 +104,6 @@
     <button *ngIf="room?.game?.phase == 'PRESIDENT_EXECUTIVE_POWER' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president"
             (click)="onPolicyPeek()">PolicyPeek
     </button>
+    <button (click)="onRestartGame()">Restart game</button>
   </ng-container>
 </div>

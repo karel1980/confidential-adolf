@@ -21,7 +21,8 @@ import java.util.*
     JsonSubTypes.Type(value = InvestigateLoyalty::class, name = "InvestigateLoyalty"),
     JsonSubTypes.Type(value = CallSpecialElection::class, name = "CallSpecialElection"),
     JsonSubTypes.Type(value = PolicyPeek::class, name = "PolicyPeek"),
-    JsonSubTypes.Type(value = Execution::class, name = "Execution")
+    JsonSubTypes.Type(value = Execution::class, name = "Execution"),
+    JsonSubTypes.Type(value = RestartGame::class, name = "RestartGame")
 
 )
 interface IncomingMessageMixin
@@ -41,6 +42,7 @@ class DenyVeto() : IncomingMessage
 data class InvestigateLoyalty(val targetId: UUID) : IncomingMessage
 class CallSpecialElection(val nextPresidentId: UUID) : IncomingMessage
 class PolicyPeek() : IncomingMessage
+class RestartGame() : IncomingMessage
 class Execution(val targetId: UUID) : IncomingMessage
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")

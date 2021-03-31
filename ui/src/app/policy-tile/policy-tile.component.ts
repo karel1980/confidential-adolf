@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit, Output, EventEmitter} from '@angular/core';
 import {PolicyTile} from '../lobby/lobby.reducer';
 
 @Component({
@@ -11,6 +11,8 @@ export class PolicyTileComponent implements OnInit {
   @Input() faction: PolicyTile;
   @Input() type: string;
   @Input() enacted: boolean;
+  @Input() clickable: boolean;
+  @Output() tileClick = new EventEmitter<PolicyTile>();
 
   constructor() { }
 

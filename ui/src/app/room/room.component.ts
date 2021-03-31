@@ -234,4 +234,8 @@ export class RoomComponent implements OnInit, OnDestroy {
   onNominate(player: Player) {
     this.onNominateChancellor(player.id);
   }
+
+  onRestartGame() {
+    this.engine.send({"_type": "RestartGame"})
+  }
 }

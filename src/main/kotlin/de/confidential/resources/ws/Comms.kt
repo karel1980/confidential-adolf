@@ -30,10 +30,11 @@ class Comms {
             .add(session)
     }
 
-    fun removeSession(id: String?) {
-        val session = sessionsById.remove(id) ?: return
+    fun removeSession(sessionId: String?) {
+        val session = sessionsById.remove(sessionId) ?: return
         val room = session.userProperties["room"] as Room? ?: return
-        sessionsByRoomId.remove(room.id)
+        sessionsByRoomId[room.id]
+            ?.remove(session)
     }
 
     fun sendToAllMembers(msg: OutgoingMessage, roomId: UUID) {
