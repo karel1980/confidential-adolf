@@ -4,7 +4,7 @@ import de.confidential.domain.ExecutivePower.*
 import de.confidential.resources.ws.*
 import java.util.*
 
-class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
+class ExecutivePowerGameMessageHandler(val game: Game) : GameMessageHandler {
 
     private val state = game.state
 
@@ -57,7 +57,7 @@ class ExecutivePowerGamePhaseHandler(val game: Game) : GamePhaseHandler {
         state.deadPlayers.add(msg.targetId)
 
         if (state.hitler in state.deadPlayers) {
-            game.end(PolicyTile.LIBERAL)
+            game.end(PolicyTile.LIBERAL, "Hitler was killed")
         } else {
             game.startNextRound()
         }

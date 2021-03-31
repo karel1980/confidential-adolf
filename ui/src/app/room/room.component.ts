@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Engine, Message} from "../lobby/engine";
-import {ErrorResponse, Player, PolicyTile, Room, RoomState, RoomTO, User, Vote} from "../lobby/lobby.reducer";
+import {ErrorResponse, ExecutivePower, Player, PolicyTile, Room, RoomState, RoomTO, User, Vote} from "../lobby/lobby.reducer";
 import {WebsocketService} from "../lobby/websocket.service";
 import {createFeatureSelector, createSelector, Store} from "@ngrx/store";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -9,6 +9,9 @@ import {RoomService} from "./room.service";
 import {VoteLeadershipComponent} from "../vote-leadership/vote-leadership.component";
 import {NominateChancellorComponent} from "../nominate-chancellor/nominate-chancellor.component";
 import {DiscardPolicyTileComponent} from '../discard-policy-tile/discard-policy-tile.component';
+import {InvestigateLoyaltyComponent} from "../investigate-loyalty/investigate-loyalty.component";
+import {PolicyPeekComponent} from "../policy-peek/policy-peek.component";
+import {ExecutePlayerComponent} from "../execute-player/execute-player.component";
 
 interface IdentificationSuccess extends Message {
   id: string,
@@ -77,6 +80,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   @ViewChild('nominateChancellor') nominateChancellor: NominateChancellorComponent;
   @ViewChild('voteLeadership') voteLeadership: VoteLeadershipComponent;
   @ViewChild('discardPolicyTile') discardPolicyTile: DiscardPolicyTileComponent;
+  @ViewChild('policyPeek') policyPeek: PolicyPeekComponent;
+  @ViewChild('investigateLoyalty') investigateLoyalty: InvestigateLoyaltyComponent;
+  @ViewChild('executePlayer') executePlayer: ExecutePlayerComponent;
 
   constructor(private ws: WebsocketService, private store: Store, private router: Router,
               private route: ActivatedRoute, private roomService: RoomService) {
@@ -136,6 +142,20 @@ export class RoomComponent implements OnInit, OnDestroy {
         if (this.room.game.askDiscardPolicy) {
           this.discardPolicyTile.open();
         }
+        if (this.room.game && this.room.game.currentRound.executivePower == ExecutivePower.POLICY_PEEK
+            && this.user.id == this.room.game.currentRound.president) {
+          this.policyPeek.open();
+        }
+        if (this.room.game && this.room.game.currentRound.executivePower == ExecutivePower.INVESTIGATE_LOYALTY
+            && this.user.id == this.room.game.currentRound.president) {
+          this.investigateLoyalty.open()
+        }
+        if (this.room.game && this.room.game.currentRound.executivePower == ExecutivePower.EXECUTION
+            && this.user.id == this.room.game.currentRound.president) {
+          this.executePlayer.open()
+        }
+
+
       }
     )
 

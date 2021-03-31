@@ -2,7 +2,7 @@ package de.confidential.domain
 
 import java.util.*
 
-class NormalRound(val roundNumber: Int, val players: List<UUID>, val presidentialCandidate: UUID): Round {
+class NormalRound(val roundNumber: Int, val players: List<UUID>, val presidentialCandidate: UUID) : Round {
 
     var chancellor: UUID? = null
     val leadershipVotingRound = VotingRound(players)
@@ -12,6 +12,7 @@ class NormalRound(val roundNumber: Int, val players: List<UUID>, val presidentia
     var vetoRequested = false
     var vetoConfirmed: Boolean? = null
 
+    var executiveAction: ExecutivePower? = null;
     var performedExecutiveAction: ExecutivePower? = null
     var peekedTiles: List<PolicyTile> = emptyList()
     var investigatedPlayerId: UUID? = null

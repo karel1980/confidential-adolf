@@ -50,7 +50,13 @@ class Room(val id: UUID) {
                     it,
                     members.first { member -> member.id == it }.name,
                     it in game.state.deadPlayers,
-                    if (it == userId) game.state.hitler == it else null
+                    if (it == userId) {
+                        val hitler = game.state.hitler.equals(it)
+                        println("$it hitler? $hitler")
+                        hitler
+                    } else {
+                        null
+                    }
                 )
             },
             game.state.rounds.map { roundTo(it, userId) },
@@ -78,8 +84,17 @@ class Room(val id: UUID) {
         round.presidentialCandidate,
         round.chancellor,
         userId in round.leadershipVotingRound.votes.keys,
-        if (userId == round.presidentialCandidate) { round.presidentPolicyTiles } else { emptyList()},
-        if (userId == round.chancellor) { round.chancellorPolicyTiles } else { emptyList()},
+        if (userId == round.presidentialCandidate) {
+            round.presidentPolicyTiles
+        } else {
+            emptyList()
+        },
+        if (userId == round.chancellor) {
+            round.chancellorPolicyTiles
+        } else {
+            emptyList()
+        },
+        round.executiveAction,
         peekedTiles(round, userId),
         investigationResult(round, userId),
         round.executedPlayer

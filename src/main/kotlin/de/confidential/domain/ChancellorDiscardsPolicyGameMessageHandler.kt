@@ -5,7 +5,7 @@ import de.confidential.resources.ws.IncomingMessage
 import de.confidential.resources.ws.RequestVeto
 import java.util.*
 
-class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandler {
+class ChancellorDiscardsPolicyGameMessageHandler(val game: Game) : GameMessageHandler {
 
     val state = game.state
 
@@ -37,7 +37,11 @@ class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandle
         }
 
         if (game.allPoliciesEnacted(enactedPolicy)) {
-            game.end(enactedPolicy)
+            if (enactedPolicy == PolicyTile.LIBERAL) {
+                game.end(PolicyTile.LIBERAL, "5 liberal policies enacted.")
+            } else {
+                game.end(PolicyTile.FASCIST, "6 fascist policies enacted.")
+            }
             return
         }
 
@@ -46,6 +50,10 @@ class ChancellorDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandle
             game.startNextRound()
             game.goToPhase(GamePhase.NOMINATING_CHANCELLOR)
         } else {
+            game.state.currentRound.executiveAction = executiveAction
+            if (executiveAction == ExecutivePower.POLICY_PEEK) {
+                this.game.state.currentRound.peekedTiles = this.game.state.policyTiles.take(3)
+            }
             game.goToPhase(GamePhase.PRESIDENT_EXECUTIVE_POWER)
         }
     }

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
-import java.lang.IllegalArgumentException
 import java.util.*
 import java.util.UUID.randomUUID
 
@@ -16,6 +15,23 @@ internal class RoomTest {
     fun constructor_createsRoomWithoutGame() {
         val room = Room(randomUUID())
         assertThat(room.game).isNull()
+    }
+
+    @Test
+    fun roomTo_hitlerIsToldHeIsHitler() {
+        val room = Room(randomUUID())
+        createUsers(5).forEach { room.addMember(it) }
+        room.startGame()
+
+        val hitlerId = room.game!!.state.hitler
+        val roomTO = room.getState(hitlerId)
+        assertThat(roomTO.game!!.players.find { it.id == hitlerId }!!.hitler)
+            .isTrue
+
+    }
+
+    private fun createUsers(n: Int): List<User> {
+        return List(n) { User(randomUUID(), "User $it") }
     }
 
     @Test

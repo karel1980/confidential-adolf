@@ -3,7 +3,7 @@ package de.confidential.domain
 import de.confidential.resources.ws.IncomingMessage
 import java.util.*
 
-class GameOverGamePhaseHandler() : GamePhaseHandler {
+class GameOverGameMessageHandler() : GameMessageHandler {
 
     override fun on(playerId: UUID, msg: IncomingMessage) {
         throw IllegalArgumentException("Game over. Not accepting new messages")

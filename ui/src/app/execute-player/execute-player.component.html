@@ -1,0 +1,6 @@
+<ng-template #modal>
+  <div class="modal-header">Execution time! Who will you kill?</div>
+  <div class="modal-body">
+    <app-player-lane [players]="filteredPlayers" [clickable]="true" (playerClick)="onExecute($event)"></app-player-lane>
+  </div>
+</ng-template>

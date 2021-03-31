@@ -1,7 +1,12 @@
-- rebuild the policy deck from discarded policies if there are fewer than 3 cards left
-- show the elegible policies to the president and the chancellor when voting
-- check for win state if hitler becomes president
-- add plaques in UI (showing president, chancellor, faction & 'isHitler' state next to player name as pillsl)
-- instead of broadcasting the full game state after every move just update what's needed
-- a lot more ui improvements (hide/disable buttons that are not available)
 - implement spectators
+
+- prevent nominating dead chancellor (backend doesn't prevent this)
+- when game is over, show hitler to everyone
+- when game is over, show player factions to everyone
+- check game rules about who(m) is allowed what information about who(m) wrt factions
+- check game rules: is hitler always unknown to all others?
+
+- bug: when hitler is killed, the 'execute player' window pops up again
+
+- [future]instead of broadcasting the full game state after every move just update what's needed
+- log events that occur in each round (+ track who shoudl receive the info), this should make it easier to build the UI 'event' view

@@ -10,6 +10,7 @@ import java.util.*
 import java.util.UUID.randomUUID
 
 internal class GameTest {
+
     @Test
     fun initiallyHas6LiberalAnd11FascistTiles() {
         val game = Game(createUsers(5))
@@ -19,6 +20,14 @@ internal class GameTest {
 
         assertThat(fascistCount).isEqualTo(11)
         assertThat(liberalCount).isEqualTo(6)
+    }
+
+    @Test
+    fun newGame_hasAHitler() {
+        val game = Game(createUsers(5))
+
+        assertThat(game.state.hitler)
+            .isNull()
     }
 
     @Test
@@ -327,7 +336,7 @@ internal class GameTest {
             .containsExactly(firstPolicy)
         assertThat(game.chancellorPolicyTiles())
             .isEqualTo(selectedTiles.subList(1, 3))
-        assertThat(game.phaseHandler.getPhase())
+        assertThat(game.messageHandler.getPhase())
             .isEqualTo(GamePhase.CHANCELLOR_DISCARDS_POLICY_TILE)
     }
 
@@ -381,7 +390,7 @@ internal class GameTest {
         assertThat((game.state.rounds[game.state.rounds.size - 2] as NormalRound).enactedPolicy)
             .isEqualTo(selectedTiles[2])
 
-        assertThat(game.phaseHandler.getPhase())
+        assertThat(game.messageHandler.getPhase())
             .isEqualTo(GamePhase.NOMINATING_CHANCELLOR)
     }
 

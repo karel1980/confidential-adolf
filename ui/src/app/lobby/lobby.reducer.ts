@@ -19,7 +19,8 @@ export interface User {
 export interface UserTO {
   id: string,
   name: string,
-  dead: boolean
+  dead: boolean,
+  hitler: boolean
 }
 
 export interface RoomTO {
@@ -45,7 +46,13 @@ export interface RoundTO {
   chancellor: string,
   presidentPolicies: PolicyTile[],
   chancellorPolicies: PolicyTile[],
-  playerVoted: boolean
+  playerVoted: boolean,
+  executivePower: ExecutivePower,
+  peekedTiles: PolicyTile[];
+  investigationResult: {
+    player: string,
+    result: PolicyTile
+  }
 }
 
 function createRoom(): Room {
@@ -126,7 +133,8 @@ export interface Player {
   name: string,
   president: boolean,
   chancellor: boolean,
-  hitler?: boolean
+  hitler?: boolean,
+  dead: boolean
 }
 
 export interface Lane {
@@ -188,6 +196,6 @@ function buildFullPlayers(game: GameTO): Player[] {
     dead: p.dead,
     president: game.rounds[game.rounds.length - 1].president == p.id,
     chancellor: game.rounds[game.rounds.length - 1].chancellor == p.id,
-    hitler: game.hitler == p.id
+    hitler: p.hitler
   }));
 }

@@ -13,19 +13,19 @@ class Game(_players: List<UUID>) {
     val state = GameState(_players)
 
     val phaseHandlers = listOf(
-        NominatingChancellorGamePhaseHandler(this),
-        VotingLeadershipGamePhaseHandler(this),
-        PresidentDiscardsPolicyGamePhaseHandler(this),
-        ChancellorDiscardsPolicyGamePhaseHandler(this),
-        VetoRequestedGamePhaseHandler(this),
-        ExecutivePowerGamePhaseHandler(this),
-        GameOverGamePhaseHandler()
+        NominatingChancellorGameMessageHandler(this),
+        VotingLeadershipGameMessageHandler(this),
+        PresidentDiscardsPolicyGameMessageHandler(this),
+        ChancellorDiscardsPolicyGameMessageHandler(this),
+        VetoRequestedGameMessageHandler(this),
+        ExecutivePowerGameMessageHandler(this),
+        GameOverGameMessageHandler()
     )
         .map { handler -> handler.getPhase() to handler }
         .toMap()
 
-    var phaseHandler: GamePhaseHandler = phaseHandlers[GamePhase.NOMINATING_CHANCELLOR]!!
-    fun phase() = phaseHandler.getPhase()
+    var messageHandler: GameMessageHandler = phaseHandlers[GamePhase.NOMINATING_CHANCELLOR]!!
+    fun phase() = messageHandler.getPhase()
 
     val players = state.players
 
@@ -49,7 +49,7 @@ class Game(_players: List<UUID>) {
         if (!(player in players)) {
             throw IllegalArgumentException("$player id is not a player in this game")
         }
-        phaseHandler.on(player, msg)
+        messageHandler.on(player, msg)
     }
 
     fun leadershipVoteResult(): VoteResult? {
@@ -76,8 +76,8 @@ class Game(_players: List<UUID>) {
 
         state.rounds.add(state.currentRound)
 
-        if (state.enactedFasistPolicies >= 3 && state.hitler == state.currentRound.presidentialCandidate) {
-            end(FASCIST)
+        if (state.enactedFasistPolicies > 3 && state.hitler == state.currentRound.presidentialCandidate) {
+            end(FASCIST, "Hitler became president after more than 3 enacted fascist policies")
         } else {
             goToPhase(GamePhase.NOMINATING_CHANCELLOR)
         }
@@ -129,10 +129,10 @@ class Game(_players: List<UUID>) {
         val policyTile = drawTopPolicyTile()
         placePolicyTile(policyTile)
         if (facistLaneIsFull()) {
-            end(FASCIST)
+            end(FASCIST, "6 fascist policies enacted")
         }
         if (liberalLaneIsFull()) {
-            end(LIBERAL)
+            end(LIBERAL, "5 liberal policies enacted")
         }
         startNextRoundWithRoundNumber(state.currentRound.roundNumber + 2)
 
@@ -162,7 +162,7 @@ class Game(_players: List<UUID>) {
     }
 
     fun goToPhase(phase: GamePhase) {
-        this.phaseHandler = phaseHandlers[phase]!!
+        this.messageHandler = phaseHandlers[phase]!!
     }
 
     fun allPoliciesEnacted(enactedPolicy: PolicyTile): Boolean {
@@ -177,8 +177,9 @@ class Game(_players: List<UUID>) {
         return state.rounds[state.rounds.size-2]
     }
 
-    fun end(winner: PolicyTile) {
+    fun end(winner: PolicyTile, reason: String) {
         state.winningParty = winner
+        state.winReason = reason
         goToPhase(GamePhase.GAME_OVER)
     }
 

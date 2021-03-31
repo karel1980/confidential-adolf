@@ -7,7 +7,7 @@ import de.confidential.resources.ws.DenyVeto
 import de.confidential.resources.ws.IncomingMessage
 import java.util.*
 
-class VetoRequestedGamePhaseHandler(val game: Game) : GamePhaseHandler {
+class VetoRequestedGameMessageHandler(val game: Game) : GameMessageHandler {
 
     val state = game.state
 

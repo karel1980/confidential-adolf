@@ -104,6 +104,7 @@ data class NormalRoundTO(
     val playerVoted: Boolean,
     val presidentPolicies: List<PolicyTile>?,
     val chancellorPolicies: List<PolicyTile>?,
+    val executivePower: ExecutivePower?,
     val peekedTiles: List<PolicyTile>?,
     val investigationResult: InvestigationResult?,
     val executedPlayer: UUID?

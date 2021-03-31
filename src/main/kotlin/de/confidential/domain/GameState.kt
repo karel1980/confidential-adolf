@@ -16,6 +16,8 @@ class GameState(val _players: List<UUID>) {
     val liberals: List<UUID>
     val fascists: List<UUID>
 
+    var winReason: String?= null
+
     public val executivePowersPerFascistPolicy: Map<Int, ExecutivePower?> = when (_players.size) {
         5, 6 -> mapOf(
             Pair(2, ExecutivePower.POLICY_PEEK),

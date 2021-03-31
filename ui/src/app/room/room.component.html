@@ -16,12 +16,24 @@
 
   <button class="btn btn-primary" (click)="onToggleDesign()">Toggle design</button>
   <h2>{{user.name}} -- {{room?.game?.phase}} -- {{room?.game?.currentRound?.playerVoted}}</h2>
+  <div>XXX {{room?.game?.hitler}} -- {{room?.game?.fullPlayers|json}}</div>
 
-  <app-nominate-chancellor #nominateChancellor [players]="room?.game?.fullPlayers" [game]="room?.game" (nominate)="onNominate($event)"></app-nominate-chancellor>
+  <app-nominate-chancellor #nominateChancellor [players]="room?.game?.fullPlayers" [game]="room?.game"
+                           (nominate)="onNominate($event)"></app-nominate-chancellor>
   <app-vote-leadership #voteLeadership [players]="room?.game?.fullPlayers"
                        [currentRound]="room?.game?.currentRound" (vote)="onVoteLeadership($event)"></app-vote-leadership>
   <app-discard-policy-tile #discardPolicyTile [policyTiles]="room?.game?.policiesToDiscard"
                            (discard)="onDiscardPolicyTile($event)"></app-discard-policy-tile>
+  <app-policy-peek #policyPeek
+                   [policies]="room?.game?.currentRound?.peekedTiles"
+                   (peek)="onPolicyPeek()"></app-policy-peek>
+  <app-investigate-loyalty #investigateLoyalty
+                           [players]="room?.game?.fullPlayers"
+                           (investigate)="onInvestigateLoyalty($event.id)"></app-investigate-loyalty>
+  <app-execute-player #executePlayer
+                      [players]="room?.game?.fullPlayers"
+                      [user]="user"
+                      (execute)="onExecution($event.id)"></app-execute-player>
 
   <ng-container *ngIf="room.game && newDesign">
     <app-game [game]="room.game"
@@ -43,7 +55,7 @@
 
   <ng-container *ngIf="room.game && !newDesign">
     <ul *ngIf="room.game">
-      <li *ngFor="let player of room.game.players">
+      <li *ngFor="let player of room.game.fullPlayers">
         {{player.name}} -
         <button
           *ngIf="room?.game?.phase == 'NOMINATING_CHANCELLOR' && user.id == room?.game?.rounds[room?.game?.rounds.length-1].president && user.id!=player.id"

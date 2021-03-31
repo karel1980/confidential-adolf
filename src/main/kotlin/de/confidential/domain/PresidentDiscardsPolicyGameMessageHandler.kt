@@ -5,7 +5,7 @@ import de.confidential.resources.ws.DiscardPolicyTile
 import de.confidential.resources.ws.IncomingMessage
 import java.util.*
 
-class PresidentDiscardsPolicyGamePhaseHandler(val game: Game) : GamePhaseHandler {
+class PresidentDiscardsPolicyGameMessageHandler(val game: Game) : GameMessageHandler {
 
     val state = game.state
 

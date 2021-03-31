@@ -25,6 +25,9 @@ import {NominateChancellorComponent} from './nominate-chancellor/nominate-chance
 import {PlayerPickerComponent} from './player-picker/player-picker.component';
 import { VoteLeadershipComponent } from './vote-leadership/vote-leadership.component';
 import { DiscardPolicyTileComponent } from './discard-policy-tile/discard-policy-tile.component';
+import { InvestigateLoyaltyComponent } from './investigate-loyalty/investigate-loyalty.component';
+import { PolicyPeekComponent } from './policy-peek/policy-peek.component';
+import { ExecutePlayerComponent } from './execute-player/execute-player.component';
 
 function createUserId(store: Store) {
   return () => {
@@ -55,7 +58,10 @@ function createUserId(store: Store) {
     NominateChancellorComponent,
     PlayerPickerComponent,
     VoteLeadershipComponent,
-    DiscardPolicyTileComponent
+    DiscardPolicyTileComponent,
+    InvestigateLoyaltyComponent,
+    PolicyPeekComponent,
+    ExecutePlayerComponent
   ],
   imports: [
     BrowserModule,

@@ -4,7 +4,7 @@ import de.confidential.resources.ws.IncomingMessage
 import de.confidential.resources.ws.NominateChancellor
 import java.util.*
 
-class NominatingChancellorGamePhaseHandler(val _game: Game) : GamePhaseHandler {
+class NominatingChancellorGameMessageHandler(val _game: Game) : GameMessageHandler {
 
     val state = _game.state
 

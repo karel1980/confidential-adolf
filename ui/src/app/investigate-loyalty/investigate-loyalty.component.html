@@ -1,0 +1,6 @@
+<div #modal class="modal">
+  <div class="modal-header">Who do you want to investigate?</div>
+  <div class="modal-body">
+    <app-player-picker [players]="players" (playerClick)="onInvestigatePlayer($event)"></app-player-picker>
+  </div>
+</div>

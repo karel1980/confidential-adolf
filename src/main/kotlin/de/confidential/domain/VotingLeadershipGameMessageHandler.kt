@@ -5,7 +5,7 @@ import de.confidential.resources.ws.LeadershipVote
 import java.lang.IllegalArgumentException
 import java.util.*
 
-class VotingLeadershipGamePhaseHandler(val game: Game) : GamePhaseHandler {
+class VotingLeadershipGameMessageHandler(val game: Game) : GameMessageHandler {
 
     val state = game.state
 
